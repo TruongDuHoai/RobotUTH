@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robotuth TTS — Test & Clone giọng</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    body { min-height: 100vh; background: #eef6f5; color: #102027; }
+    .app { max-width: 900px; margin: 0 auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    h1 { font-size: 30px; color: #0f172a; }
+    h2 { font-size: 20px; color: #0f172a; }
+    .status { color: #475569; font-size: 14px; margin-top: 6px; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #dcfce7; color: #166534; margin-left: 8px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    a, button { border: 0; border-radius: 8px; padding: 10px 14px; background: #006f72; color: #fff; cursor: pointer; font-size: 14px; text-decoration: none; }
+    a.secondary, button.secondary { background: #d9e8e7; color: #123235; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .panel { background: #fff; border: 1px solid #dbe7e7; border-radius: 10px; padding: 22px; box-shadow: 0 12px 34px rgba(15,23,42,.08); margin-bottom: 16px; }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; }
+    input, textarea, select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 15px; }
+    textarea { min-height: 100px; resize: vertical; }
+    .hint { color: #64748b; font-size: 13px; margin-top: 6px; line-height: 1.45; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .result { white-space: pre-wrap; margin-top: 14px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; font-family: Consolas, monospace; font-size: 13px; }
+    .result.ok { background: #ecfdf5; border-color: #86efac; color: #065f46; }
+    .result.err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    audio { width: 100%; margin-top: 12px; }
+    .voice-list { display: grid; gap: 8px; margin-top: 10px; }
+    .voice-item { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; flex-wrap: wrap; }
+    .voice-item.is-default { border-color: #86efac; background: #ecfdf5; }
+    .voice-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>TTS — RobotUTH</h1>
+        <div class="status" id="status">Đang kiểm tra...</div>
+      </div>
+      <div class="actions">
+        <a class="secondary" href="/static/web/asr.html">ASR</a>
+        <a class="secondary" href="/static/web/chat.html">Chat</a>
+        <a class="secondary" href="/static/web/knowledge.html">Knowledge</a>
+        <a class="secondary" href="/static/web/settings.html">LLM</a>
+        <a class="secondary" href="/static/index.html">Home</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <h2 style="margin-bottom:12px;">Hệ thống giọng nói</h2>
+      <div class="field">
+        <label for="provider">Chọn backend TTS</label>
+        <select id="provider">
+          <option value="vieneu">VieNeu self-hosted</option>
+          <option value="openai">Google TTS API</option>
+        </select>
+        <div class="hint">Google TTS API cần <code>OPENAI_API_KEY</code> trên server. Khóa không được lưu trong trình duyệt.</div>
+      </div>
+      <button id="btnProvider">Lưu backend</button>
+      <div class="result" id="providerResult"></div>
+    </section>
+
+    <section class="panel">
+      <h2 style="margin-bottom:12px;">Phát thử giọng</h2>
+      <div class="field" id="voiceField">
+        <label for="voice">Chọn giọng</label>
+        <select id="voice"></select>
+        <div class="hint">Giọng mặc định dùng cho robot/conversation. Có thể đổi bằng nút bên dưới.</div>
+      </div>
+      <div class="field">
+        <label for="text">Văn bản test</label>
+        <textarea id="text">Xin chào, tôi là RobotUTH. Rất vui được gặp bạn.</textarea>
+      </div>
+      <div class="toolbar">
+        <button id="btnTest">Phát thử</button>
+        <button id="btnDefault" class="secondary">Đặt làm giọng mặc định</button>
+      </div>
+      <audio id="player" controls></audio>
+      <div class="result" id="testResult"></div>
+    </section>
+
+    <section class="panel" id="clonePanel">
+      <h2 style="margin-bottom:12px;">Clone giọng mới</h2>
+      <p class="hint" style="margin-bottom:14px;">
+        Upload audio mẫu 3–8 giây (WAV/MP3) kèm transcript chính xác. VieNeU sẽ học giọng và lưu vào <code>data/tts_voices/</code>.
+      </p>
+      <div class="field">
+        <label for="cloneName">Tên giọng (slug)</label>
+        <input id="cloneName" placeholder="vi_du_giong">
+      </div>
+      <div class="field">
+        <label for="cloneDesc">Mô tả</label>
+        <input id="cloneDesc" placeholder="Giọng đọc thử">
+      </div>
+      <div class="field">
+        <label for="cloneText">Transcript mẫu (ref_text)</label>
+        <textarea id="cloneText" placeholder="Nội dung đúng với file audio mẫu 3–8 giây"></textarea>
+      </div>
+      <div class="field">
+        <label for="cloneAudio">Audio mẫu (WAV/MP3, 3–8s)</label>
+        <input id="cloneAudio" type="file" accept="audio/*">
+      </div>
+      <button id="btnClone">Lưu giọng clone</button>
+      <div class="result" id="cloneResult"></div>
+    </section>
+
+    <section class="panel" id="voicePanel">
+      <h2 style="margin-bottom:12px;">Danh sách giọng</h2>
+      <div class="voice-list" id="voiceList"></div>
+    </section>
+  </main>
+
+  <script src="/static/web/auth.js"></script><script>
+    const API = window.location.origin;
+    let defaultVoice = 'ngoc-huyen';
+
+    function setResult(id, value, ok) {
+      const el = document.getElementById(id);
+      el.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      el.className = 'result' + (ok === true ? ' ok' : ok === false ? ' err' : '');
+    }
+
+    async function loadSettings() {
+      const res = await fetch(`${API}/api/tts/settings`);
+      const data = await res.json();
+      defaultVoice = data.settings?.default_voice || 'ngoc-huyen';
+      document.getElementById('provider').value = data.settings?.provider || 'vieneu';
+      return defaultVoice;
+    }
+
+    async function loadHealth() {
+      const res = await fetch(`${API}/api/tts/health`);
+      const data = await res.json();
+      defaultVoice = data.default_voice || defaultVoice;
+      const ok = data.reachable && (data.provider === 'openai' || data.backend?.model_loaded);
+      document.getElementById('status').innerHTML = ok
+        ? `TTS online | giọng mặc định: <strong>${defaultVoice}</strong> <span class="badge">${data.voice_source || 'env'}</span>`
+        : `TTS offline | ${data.error || JSON.stringify(data.backend || {})}`;
+      return ok;
+    }
+
+    function updateProviderUi() {
+      const isOpenAi = document.getElementById('provider').value === 'openai';
+      document.getElementById('clonePanel').hidden = isOpenAi;
+      document.getElementById('voicePanel').hidden = isOpenAi;
+      document.getElementById('voiceField').hidden = isOpenAi;
+      document.getElementById('btnDefault').hidden = isOpenAi;
+    }
+
+    async function testVoice(voiceId, resultId) {
+      const text = document.getElementById('text').value.trim();
+      setResult(resultId || 'testResult', 'Đang tổng hợp...');
+      const res = await fetch(`${API}/api/tts/test`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, voice: voiceId }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      document.getElementById('player').src = URL.createObjectURL(blob);
+      setResult(resultId || 'testResult', `OK — ${voiceId} — ${blob.size} bytes WAV`, true);
+    }
+
+    function renderVoiceList(data) {
+      const list = document.getElementById('voiceList');
+      list.innerHTML = '';
+      const presets = (data.presets || []).map(v => ({ ...v, type: 'preset' }));
+      const cloned = (data.cloned || []).map(v => ({ id: v.id, label: v.label, type: 'cloned', ref_text: v.ref_text }));
+      const all = [...presets, ...cloned];
+
+      if (!all.length) {
+        list.innerHTML = '<div class="hint">Chưa có giọng nào.</div>';
+        return;
+      }
+
+      all.forEach(v => {
+        const row = document.createElement('div');
+        row.className = 'voice-item' + (v.id === defaultVoice ? ' is-default' : '');
+        const meta = document.createElement('div');
+        const defaultBadge = v.id === defaultVoice ? ' <span class="badge">mặc định</span>' : '';
+        meta.innerHTML = `<strong>${v.id}</strong>${defaultBadge}<div class="hint">${v.label} (${v.type})</div>`;
+        row.appendChild(meta);
+
+        const actions = document.createElement('div');
+        actions.className = 'voice-actions';
+
+        const testBtn = document.createElement('button');
+        testBtn.className = 'secondary';
+        testBtn.textContent = 'Nghe thử';
+        testBtn.onclick = async () => {
+          testBtn.disabled = true;
+          try {
+            document.getElementById('voice').value = v.id;
+            await testVoice(v.id, 'testResult');
+          } catch (e) {
+            setResult('testResult', `Lỗi: ${e.message}`, false);
+          } finally {
+            testBtn.disabled = false;
+          }
+        };
+        actions.appendChild(testBtn);
+
+        if (v.id !== defaultVoice) {
+          const setBtn = document.createElement('button');
+          setBtn.className = 'secondary';
+          setBtn.textContent = 'Đặt mặc định';
+          setBtn.onclick = async () => {
+            await setDefaultVoice(v.id);
+          };
+          actions.appendChild(setBtn);
+        }
+
+        if (v.type === 'cloned') {
+          const del = document.createElement('button');
+          del.className = 'secondary';
+          del.textContent = 'Xóa';
+          del.onclick = async () => {
+            if (!confirm(`Xóa giọng ${v.id}?`)) return;
+            const res = await fetch(`${API}/api/tts/voices/${v.id}`, { method: 'DELETE' });
+            if (!res.ok) {
+              setResult('testResult', await res.text(), false);
+              return;
+            }
+            if (defaultVoice === v.id) await setDefaultVoice('ngoc-huyen');
+            await loadVoices();
+          };
+          actions.appendChild(del);
+        }
+
+        row.appendChild(actions);
+        list.appendChild(row);
+      });
+    }
+
+    async function loadVoices() {
+      const res = await fetch(`${API}/api/tts/voices`);
+      const data = await res.json();
+      const select = document.getElementById('voice');
+      select.innerHTML = '';
+      const all = [
+        ...(data.presets || []).map(v => ({ ...v, type: 'preset' })),
+        ...(data.cloned || []).map(v => ({ id: v.id, label: v.label, type: 'cloned' })),
+      ];
+      if (!all.length) {
+        const opt = document.createElement('option');
+        opt.value = 'ngoc-huyen';
+        opt.textContent = 'ngoc-huyen (default)';
+        select.appendChild(opt);
+      } else {
+        all.forEach(v => {
+          const opt = document.createElement('option');
+          opt.value = v.id;
+          opt.textContent = `${v.label} (${v.type})`;
+          if (v.id === defaultVoice) opt.selected = true;
+          select.appendChild(opt);
+        });
+      }
+      renderVoiceList(data);
+    }
+
+    async function setDefaultVoice(voiceId) {
+      const res = await fetch(`${API}/api/tts/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ default_voice: voiceId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+      defaultVoice = data.settings?.default_voice || voiceId;
+      setResult('testResult', data.message || `Đã đặt giọng mặc định: ${defaultVoice}`, true);
+      await loadHealth();
+      await loadVoices();
+      document.getElementById('voice').value = defaultVoice;
+    }
+
+    document.getElementById('btnProvider').onclick = async () => {
+      const btn = document.getElementById('btnProvider');
+      const provider = document.getElementById('provider').value;
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/api/tts/settings`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider }),
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.detail || `HTTP ${res.status}`);
+        setResult('providerResult', `Đã chọn ${provider === 'openai' ? 'Google TTS API' : 'VieNeu self-hosted'}.`, true);
+        updateProviderUi();
+        await loadHealth();
+        await loadVoices();
+      } catch (e) {
+        setResult('providerResult', `Lỗi: ${e.message}`, false);
+      } finally { btn.disabled = false; }
+    };
+
+    document.getElementById('btnTest').onclick = async () => {
+      const btn = document.getElementById('btnTest');
+      btn.disabled = true;
+      try {
+        await testVoice(document.getElementById('voice').value);
+      } catch (e) {
+        setResult('testResult', `Lỗi: ${e.message}`, false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById('btnDefault').onclick = async () => {
+      const btn = document.getElementById('btnDefault');
+      btn.disabled = true;
+      try {
+        await setDefaultVoice(document.getElementById('voice').value);
+      } catch (e) {
+        setResult('testResult', `Lỗi: ${e.message}`, false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    document.getElementById('btnClone').onclick = async () => {
+      const btn = document.getElementById('btnClone');
+      const file = document.getElementById('cloneAudio').files[0];
+      const name = document.getElementById('cloneName').value.trim();
+      const refText = document.getElementById('cloneText').value.trim();
+      if (!name) { setResult('cloneResult', 'Nhập tên giọng.', false); return; }
+      if (!refText) { setResult('cloneResult', 'Nhập transcript mẫu (ref_text).', false); return; }
+      if (!file) { setResult('cloneResult', 'Chọn file audio mẫu.', false); return; }
+      btn.disabled = true;
+      setResult('cloneResult', 'Đang clone (có thể mất 10–30s)...');
+      try {
+        const form = new FormData();
+        form.append('name', name);
+        form.append('description', document.getElementById('cloneDesc').value.trim());
+        form.append('ref_text', refText);
+        form.append('ref_audio', file);
+        const res = await fetch(`${API}/api/tts/voices/clone`, { method: 'POST', body: form });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          const detail = typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail || data);
+          throw new Error(detail || `HTTP ${res.status}`);
+        }
+        setResult('cloneResult', data.message || 'Đã lưu giọng clone', true);
+        document.getElementById('cloneName').value = '';
+        document.getElementById('cloneDesc').value = '';
+        document.getElementById('cloneText').value = '';
+        document.getElementById('cloneAudio').value = '';
+        await loadVoices();
+        if (confirm(`Clone thành công. Đặt "${data.voice}" làm giọng mặc định?`)) {
+          await setDefaultVoice(data.voice);
+        }
+      } catch (e) {
+        setResult('cloneResult', `Lỗi: ${e.message}`, false);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+
+    (async () => {
+      await loadSettings();
+      updateProviderUi();
+      await loadHealth();
+      await loadVoices();
+    })();
+  </script>
+</body>
+</html>

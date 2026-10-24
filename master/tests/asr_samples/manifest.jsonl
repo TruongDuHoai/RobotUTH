@@ -1,0 +1,5 @@
+{"id": "s01", "wav": "F:\\AgentSDKSample\\robotuthv3\\tests\\asr_samples\\s01.wav", "ref": "Xin chào, tôi là trợ lý ảo của trường đại học giao thông vận tải.", "intent": "greeting", "keyterms": ["giao thông vận tải"]}
+{"id": "s02", "wav": "F:\\AgentSDKSample\\robotuthv3\\tests\\asr_samples\\s02.wav", "ref": "Bạn cần tôi hỗ trợ điều gì?", "intent": "ask_help", "keyterms": []}
+{"id": "s03", "wav": "F:\\AgentSDKSample\\robotuthv3\\tests\\asr_samples\\s03.wav", "ref": "Trường đại học giao thông vận tải thành phố Hồ Chí Minh.", "intent": "intro_uth", "keyterms": ["giao thông vận tải"]}
+{"id": "s04", "wav": "F:\\AgentSDKSample\\robotuthv3\\tests\\asr_samples\\s04.wav", "ref": "Xin vui lòng chờ trong giây lát.", "intent": "wait", "keyterms": []}
+{"id": "s05", "wav": "F:\\AgentSDKSample\\robotuthv3\\tests\\asr_samples\\s05.wav", "ref": "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.", "intent": "thanks", "keyterms": []}

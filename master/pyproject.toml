@@ -1,0 +1,112 @@
+# Robotuth v3 — metadata dự án, phụ thuộc, lint và test.
+#
+# PHỤ THUỘC NẰM Ở ĐÂY (nguồn duy nhất — không còn requirements*.txt):
+#   [project.dependencies]           -> server chính (.venv)
+#   [project.optional-dependencies]  -> extras: face / speech / ocr / dev
+# Vài gói phải cài RIÊNG vì cần index-url đặc biệt (torch, nemo_toolkit,
+# paddlepaddle-gpu, llama-cpp-python) — xem README mục "Dịch vụ GPU".
+#
+# The lint gate is intentionally a *correctness + cleanliness* set, not a style
+# bikeshed: pycodestyle import/statement/runtime errors (E4/E7/E9), pyflakes
+# (F), trailing-whitespace (W) and import sorting (I). Line-length (E501) and
+# the broader pyupgrade/simplify families are deliberately not enabled yet so
+# the gate stays green on the current tree; widen `select` as the code is
+# modernised.
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "robotuth"
+version = "0.1.0"
+description = "Q&A library robot backend (FastAPI) for the UTH library robot"
+requires-python = ">=3.10"
+dependencies = [
+    # Core framework
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",  # kèm websockets/httptools cho WS ASR
+    "pydantic>=2.5.0",
+    "python-multipart>=0.0.6",  # upload multipart (asr / tts / knowledge)
+    # HTTP
+    "requests>=2.31.0",
+    "httpx>=0.25.0",
+    # Data
+    "numpy>=1.24.0",
+    "pillow>=10.0.0",
+    # Database
+    "psycopg[binary]>=3.1.18",
+    "redis>=5.0.0",
+    # Utilities
+    "python-dotenv>=1.0.0",
+    # Knowledge base parsing
+    "PyPDF2>=3.0.0",
+    "python-docx>=1.1.0",
+]
+
+[project.optional-dependencies]
+# Nhận diện khuôn mặt cho server chính (.venv). Mặc định CPU (FACE_USE_GPU=false);
+# máy có GPU: pip uninstall onnxruntime && pip install onnxruntime-gpu.
+face = [
+    "insightface>=0.7.3",
+    "onnxruntime>=1.16.0",
+]
+# .venv-asr (ASR Parakeet + TTS VieNeu). torch, nemo_toolkit[asr] và
+# llama-cpp-python (TTS turbo/GGUF) cài riêng — xem README.
+speech = [
+    "soundfile>=0.12.0",
+    "vieneu>=3.0.0",
+    "peft>=0.10.0",  # LoRA adapter (tts_gpu_server.py)
+    "transformers>=4.40.0",
+    "accelerate>=0.30.0",
+    "huggingface-hub>=0.23.0",
+    # "noisereduce>=3.0.0",  # tùy chọn: khử nhiễu spectral cho ASR
+]
+# .venv-ocr (PDF scan). paddlepaddle-gpu cài riêng — xem README.
+ocr = [
+    "pypdfium2>=4.30.0",
+    "paddleocr>=3.7.0",
+]
+# CI + máy dev (ruff thay cho flake8/black cũ).
+dev = [
+    "pytest>=7.4.0",
+    "ruff>=0.6.0",
+]
+
+[tool.setuptools.packages.find]
+include = ["server*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+# Junk/scratch dirs are gitignored; keep ruff out of them too.
+extend-exclude = [
+    "android",
+    "data",
+    "tmp",
+    "tmp_adb",
+    "tmp_apk",
+    "tmp_jcore",
+    "noibo",
+    "outputs",
+    "build-cache",
+    "static/web/robotmap",
+]
+
+[tool.ruff.lint]
+select = [
+    "E4",  # pycodestyle: import errors (E401, E402)
+    "E7",  # pycodestyle: statement errors (E701-E742)
+    "E9",  # pycodestyle: runtime errors (E901, E902)
+    "F",   # pyflakes: undefined names, unused imports/vars
+    "W",   # pycodestyle: whitespace warnings (W291, W293, W292)
+    "I",   # isort: import ordering
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Cho phép chạy `pytest` trực tiếp khi chưa `pip install -e .` (tests import server.*).
+pythonpath = ["."]
+# tests/asr_samples and tests/asr_golden hold audio fixtures, not tests.
+norecursedirs = ["tmp", "tmp_adb", "tmp_apk", "tmp_jcore", "noibo", "data", "android"]

@@ -1,0 +1,70 @@
+# Chuan hoa ket thuc dong — CHONG LOI CRLF tren server Linux.
+#
+# LOI THAT (gap o bookchat 26/09/2026): `core.autocrlf=true` tren may Windows lam
+# Git doi LF -> CRLF khi checkout. Hau qua: script `.sh` KHONG CHAY DUOC tren Linux
+#   line 14: set: pipefail: invalid option name
+#   line 41: syntax error near unexpected token `$'do\r''
+# Day la loai loi CHI lo tren may khac: tren Windows khong sao, len server Linux moi
+# chet — tuc la no pha dung buoc cai dat. Repo nay cung deploy sang Linux.
+#
+# Cach sua: ep LF cho MOI file van ban, va danh dau ro file nao la binary.
+
+# Mac dinh: moi file van ban dung LF khi checkout, va chuan hoa ve LF khi commit.
+* text=auto eol=lf
+
+# Script shell PHAI la LF — CRLF lam bash bao "invalid option name".
+*.sh        text eol=lf
+*.bash      text eol=lf
+
+# Python / JS / config.
+*.py        text eol=lf
+*.cjs       text eol=lf
+*.js        text eol=lf
+*.json      text eol=lf
+*.yml       text eol=lf
+*.yaml      text eol=lf
+*.toml      text eol=lf
+*.sql       text eol=lf
+*.md        text eol=lf
+*.txt       text eol=lf
+*.service   text eol=lf
+*.timer     text eol=lf
+*.env       text eol=lf
+.env.*      text eol=lf
+*.example   text eol=lf
+
+# Android / Kotlin / Gradle.
+*.kt        text eol=lf
+*.kts       text eol=lf
+*.gradle    text eol=lf
+*.xml       text eol=lf
+
+# Web.
+*.html      text eol=lf
+*.css       text eol=lf
+*.svg       text eol=lf
+
+# Binary: KHONG doi ket thuc dong.
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.pdf       binary
+*.wav       binary
+*.mp3       binary
+*.gguf      binary
+*.nemo      binary
+*.onnx      binary
+*.bin       binary
+*.npy       binary
+*.npz       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.apk       binary
+*.aab       binary
+*.zip       binary
+*.tar.gz    binary
+*.xz        binary
+*.dump      binary

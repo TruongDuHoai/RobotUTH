@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robotuth LLM Settings</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    body { min-height: 100vh; background: #eef6f5; color: #102027; }
+    .app { max-width: 900px; margin: 0 auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    h1 { font-size: 30px; color: #0f172a; }
+    .status { color: #475569; font-size: 14px; margin-top: 6px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    a, button { border: 0; border-radius: 8px; padding: 10px 14px; background: #006f72; color: #fff; cursor: pointer; font-size: 14px; text-decoration: none; }
+    a.secondary, button.secondary { background: #d9e8e7; color: #123235; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .panel { background: #fff; border: 1px solid #dbe7e7; border-radius: 10px; padding: 22px; box-shadow: 0 12px 34px rgba(15,23,42,.08); }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; color: #0f172a; }
+    .hint { font-weight: 400; color: #64748b; font-size: 13px; margin-top: 6px; }
+    input, select, textarea { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 15px; color: #0f172a; background: #fff; }
+    textarea { min-height: 90px; resize: vertical; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+    .result { white-space: pre-wrap; margin-top: 18px; min-height: 60px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b; font-family: Consolas, monospace; font-size: 13px; line-height: 1.45; overflow: auto; }
+    .result.ok { background: #ecfdf5; border-color: #86efac; color: #065f46; }
+    .result.err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; background: #d9e8e7; color: #123235; }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 760px) { .app { padding: 18px; } .grid-2 { grid-template-columns: 1fr; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Cấu hình LLM</h1>
+        <div class="status" id="status">Đang tải...</div>
+      </div>
+      <div class="actions">
+        <a class="secondary" href="/static/web/knowledge.html">Knowledge</a>
+        <a class="secondary" href="/static/web/asr.html">ASR</a>
+        <a class="secondary" href="/static/web/tts.html">TTS</a>
+        <a class="secondary" href="/static/web/attendance.html">Attendance</a>
+        <a class="secondary" href="/static/index.html">Home</a>
+      </div>
+    </header>
+
+    <section class="panel">
+      <p style="margin-bottom:16px;color:#475569;line-height:1.5;">
+        Cấu hình model gọi qua API tương thích OpenAI (<code>/v1/chat/completions</code>).
+        Giá trị lưu tại server sẽ ghi đè biến môi trường <code>.env</code>.
+        Chỉ truy cập qua <strong>Tailscale</strong>.
+      </p>
+
+      <form id="llmForm">
+        <div class="field">
+          <label for="apiBase">API Endpoint (base URL)</label>
+          <input id="apiBase" type="url" placeholder="http://localhost:8080/v1" required>
+          <div class="hint">Ví dụ: <code>http://localhost:8080/v1</code>, <code>https://api.openai.com/v1</code></div>
+        </div>
+
+        <div class="field">
+          <label for="apiKey">API Key</label>
+          <input id="apiKey" type="password" placeholder="Để trống nếu không cần key" autocomplete="off">
+          <div class="hint" id="apiKeyHint">Chưa có key</div>
+        </div>
+
+        <div class="field">
+          <label for="model">Model</label>
+          <input id="model" type="text" placeholder="robot" required>
+        </div>
+
+        <div class="grid-2">
+          <div class="field">
+            <label for="reasoningEffort">Reasoning effort</label>
+            <select id="reasoningEffort">
+              <option value="">(không dùng)</option>
+              <option value="low">low</option>
+              <option value="medium">medium</option>
+              <option value="high">high</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="maxTokens">Max tokens</label>
+            <input id="maxTokens" type="number" min="1" max="8192" value="256">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="testPrompt">Câu test (khi bấm Thử kết nối)</label>
+          <textarea id="testPrompt">Xin chào, hãy giới thiệu ngắn gọn về bản thân.</textarea>
+        </div>
+
+        <div class="toolbar">
+          <button type="submit" id="btnSave">Lưu cấu hình</button>
+          <button type="button" class="secondary" id="btnTest">Thử kết nối</button>
+          <button type="button" class="secondary" id="btnReload">Tải lại</button>
+        </div>
+      </form>
+
+      <div class="result" id="result"></div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE_URL = window.location.origin;
+    const API_KEY_MASK = '********';
+    let currentSettings = null;
+
+    function setResult(text, ok = null) {
+      const el = document.getElementById('result');
+      el.textContent = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+      el.classList.remove('ok', 'err');
+      if (ok === true) el.classList.add('ok');
+      if (ok === false) el.classList.add('err');
+    }
+
+    function fillForm(settings) {
+      currentSettings = settings;
+      document.getElementById('apiBase').value = settings.api_base || '';
+      document.getElementById('model').value = settings.model || '';
+      document.getElementById('reasoningEffort').value = settings.reasoning_effort || '';
+      document.getElementById('maxTokens').value = settings.max_tokens ?? 256;
+      document.getElementById('apiKey').value = '';
+      document.getElementById('apiKey').placeholder = settings.api_key_set
+        ? `Giữ nguyên key hiện tại (${settings.api_key_masked})`
+        : 'Nhập API key (nếu cần)';
+
+      const sourceBadge = settings.source === 'runtime' ? 'runtime file' : 'env (.env)';
+      const keyBadge = settings.api_key_set ? 'key: đã cấu hình' : 'key: chưa có';
+      document.getElementById('status').innerHTML =
+        `Nguồn: <span class="badge">${sourceBadge}</span> ` +
+        `<span class="badge ${settings.api_key_set ? 'ok' : ''}">${keyBadge}</span>`;
+      document.getElementById('apiKeyHint').textContent = settings.api_key_set
+        ? `Key hiện tại: ${settings.api_key_masked}. Để trống ô trên khi lưu để giữ nguyên.`
+        : 'Server chưa có API key — nhập key mới nếu endpoint yêu cầu.';
+    }
+
+    function apiError(response, data) {
+      if (response.status === 404) {
+        return 'API /api/settings/llm chưa có trên server. Chạy trên myservertwo: cd ~/robotuthv3 && git pull --ff-only && bash deploy.sh';
+      }
+      if (response.status === 403) {
+        return (data.detail || 'Chỉ truy cập qua Tailscale VPN (100.64.x.x).');
+      }
+      return data.detail || data.message || `HTTP ${response.status}`;
+    }
+
+    async function loadSettings() {
+      setResult('Đang tải cấu hình...');
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/settings/llm`);
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiError(response, data));
+        fillForm(data.settings);
+        setResult('Đã tải cấu hình.', true);
+      } catch (error) {
+        document.getElementById('status').textContent = `Lỗi: ${error.message}`;
+        setResult(`Không tải được cấu hình: ${error.message}`, false);
+      }
+    }
+
+    function collectPayload() {
+      const apiKey = document.getElementById('apiKey').value.trim();
+      const payload = {
+        api_base: document.getElementById('apiBase').value.trim(),
+        model: document.getElementById('model').value.trim(),
+        reasoning_effort: document.getElementById('reasoningEffort').value,
+        max_tokens: Number(document.getElementById('maxTokens').value) || 256,
+      };
+      if (apiKey) payload.api_key = apiKey;
+      else if (currentSettings?.api_key_set) payload.api_key = API_KEY_MASK;
+      return payload;
+    }
+
+    document.getElementById('llmForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const btn = document.getElementById('btnSave');
+      btn.disabled = true;
+      setResult('Đang lưu...');
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/settings/llm`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(collectPayload()),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiError(response, data));
+        fillForm(data.settings);
+        setResult(data.message || 'Đã lưu.', true);
+      } catch (error) {
+        setResult(`Lỗi lưu: ${error.message}`, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('btnTest').addEventListener('click', async () => {
+      const btn = document.getElementById('btnTest');
+      btn.disabled = true;
+      setResult('Đang thử kết nối LLM...');
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/settings/llm/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: document.getElementById('testPrompt').value.trim() }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(apiError(response, data));
+        if (data.success) {
+          setResult(`OK — ${data.message}\n\nModel: ${data.model}\nEndpoint: ${data.api_base}\n\nPhản hồi:\n${data.response}`, true);
+        } else {
+          setResult(`${data.message}\n${data.detail || ''}`, false);
+        }
+      } catch (error) {
+        setResult(`Lỗi test: ${error.message}`, false);
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    document.getElementById('btnReload').addEventListener('click', loadSettings);
+    loadSettings();
+  </script>
+</body>
+</html>

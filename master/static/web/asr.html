@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RobotUTH ASR — Parakeet CTC</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    body { min-height: 100vh; background: #eef6f5; color: #102027; }
+    .app { max-width: 920px; margin: 0 auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    h1 { font-size: 28px; color: #0f172a; }
+    h2 { font-size: 18px; color: #0f172a; margin-bottom: 12px; }
+    .status { color: #475569; font-size: 14px; margin-top: 6px; line-height: 1.45; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    a, button { border: 0; border-radius: 8px; padding: 10px 14px; background: #006f72; color: #fff; cursor: pointer; font-size: 14px; text-decoration: none; }
+    a.secondary, button.secondary { background: #d9e8e7; color: #123235; }
+    button.danger { background: #b91c1c; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .panel { background: #fff; border: 1px solid #dbe7e7; border-radius: 12px; padding: 22px; box-shadow: 0 12px 34px rgba(15,23,42,.08); margin-bottom: 16px; }
+    .cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; }
+    .card span { display: block; font-size: 11px; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+    .card strong { display: block; margin-top: 6px; font-size: 15px; color: #006f72; word-break: break-all; }
+    .hint { color: #64748b; font-size: 13px; line-height: 1.5; margin-bottom: 14px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+    .result { white-space: pre-wrap; margin-top: 14px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; font-family: Consolas, monospace; font-size: 13px; min-height: 48px; }
+    .result.ok { background: #ecfdf5; border-color: #86efac; color: #065f46; }
+    .result.err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    .transcript {
+      margin-top: 14px; padding: 18px; border-radius: 12px; background: #f0fbfa;
+      border: 1px solid #b7d4d4; font-size: 20px; line-height: 1.45; color: #0f172a; min-height: 64px;
+    }
+    .rec-dot {
+      width: 10px; height: 10px; border-radius: 50%; background: #94a3b8; display: inline-block;
+    }
+    .rec-dot.on { background: #dc2626; box-shadow: 0 0 0 4px rgba(220,38,38,.2); animation: pulse 1s infinite; }
+    @keyframes pulse { 50% { opacity: .5; } }
+    input[type="file"] { font-size: 14px; }
+    .meter {
+      height: 8px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin-top: 12px;
+    }
+    .meter > i { display: block; height: 100%; width: 0; background: #006f72; transition: width .08s linear; }
+    @media (max-width: 720px) {
+      .app { padding: 16px; }
+      .cards { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>ASR — Parakeet CTC</h1>
+        <div class="status" id="status">Đang kiểm tra backend…</div>
+      </div>
+      <div class="actions">
+        <a class="secondary" href="/static/web/tts.html">TTS</a>
+        <a class="secondary" href="/static/web/chat.html">Chat</a>
+        <a class="secondary" href="/static/web/knowledge.html">Knowledge</a>
+        <a class="secondary" href="/static/web/settings.html">LLM</a>
+        <a class="secondary" href="/static/index.html">Home</a>
+      </div>
+    </header>
+
+    <div class="cards">
+      <div class="card"><span>Trạng thái</span><strong id="cAvail">—</strong></div>
+      <div class="card"><span>Mode</span><strong id="cMode">—</strong></div>
+      <div class="card"><span>Device</span><strong id="cDevice">—</strong></div>
+      <div class="card"><span>Model / VRAM</span><strong id="cModel">—</strong></div>
+    </div>
+
+    <section class="panel">
+      <h2>Ghi mic & nhận dạng</h2>
+      <p class="hint">
+        Ghi âm mono 16 kHz → gửi <code>POST /asr/ctc/chunk</code> (Docker proxy → host GPU :8002).
+        Nói rõ tiếng Việt 2–5 giây, rồi bấm <strong>Dừng &amp; nhận dạng</strong>.
+      </p>
+      <div class="toolbar">
+        <span class="rec-dot" id="recDot"></span>
+        <button id="btnRec">Bắt đầu ghi</button>
+        <button id="btnStop" class="danger" disabled>Dừng &amp; nhận dạng</button>
+        <button id="btnRefresh" class="secondary">Refresh health</button>
+      </div>
+      <div class="meter"><i id="levelBar"></i></div>
+      <div class="transcript" id="transcript">Transcript sẽ hiện ở đây.</div>
+      <div class="result" id="metaResult"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Upload file WAV / audio</h2>
+      <p class="hint">Ưu tiên WAV mono 16 kHz 16-bit. File khác trình duyệt sẽ resample khi decode được.</p>
+      <div class="toolbar">
+        <input id="fileInput" type="file" accept="audio/*,.wav">
+        <button id="btnUpload">Gửi file</button>
+      </div>
+      <div class="result" id="fileResult"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Thông tin backend</h2>
+      <div class="result" id="healthJson">…</div>
+    </section>
+  </main>
+
+  <script src="/static/web/auth.js"></script><script>
+    const API = window.location.origin;
+    const TARGET_RATE = 16000;
+
+    let mediaStream = null;
+    let audioCtx = null;
+    let processor = null;
+    let sourceNode = null;
+    let recBuffers = [];
+    let recLength = 0;
+    let recording = false;
+    let analyser = null;
+    let rafId = 0;
+    let captureRate = TARGET_RATE;
+
+    function setResult(id, value, ok) {
+      const el = document.getElementById(id);
+      el.textContent = typeof value === "string" ? value : JSON.stringify(value, null, 2);
+      el.className = "result" + (ok === true ? " ok" : ok === false ? " err" : "");
+    }
+
+    async function loadHealth() {
+      try {
+        const r = await fetch(`${API}/asr/health`, { cache: "no-store" });
+        const d = await r.json();
+        document.getElementById("cAvail").textContent = d.available ? "online" : "offline";
+        document.getElementById("cMode").textContent = d.mode || "—";
+        document.getElementById("cDevice").textContent =
+          d.device || (d.cuda_available ? "cuda" : "—");
+        const model = (d.model || "").replace(/^nvidia\//, "") || "—";
+        const vram = d.vram_mb != null ? `${Math.round(d.vram_mb)} MB` : "";
+        document.getElementById("cModel").textContent = [model, vram].filter(Boolean).join(" · ") || "—";
+        document.getElementById("status").textContent = d.available
+          ? `ASR: online · ${d.message || "ready"} · backend ${d.backend_url || "local"}`
+          : `ASR: offline · ${d.error || d.message || "không sẵn sàng"}`;
+        setResult("healthJson", d, !!d.available);
+        document.getElementById("btnRec").disabled = !d.available;
+        document.getElementById("btnUpload").disabled = !d.available;
+        return d;
+      } catch (e) {
+        document.getElementById("status").textContent = `ASR: lỗi kết nối | ${e.message}`;
+        setResult("healthJson", e.message, false);
+        document.getElementById("btnRec").disabled = true;
+        document.getElementById("btnUpload").disabled = true;
+      }
+    }
+
+    function downsampleTo16k(float32, sampleRate) {
+      if (sampleRate === TARGET_RATE) return float32;
+      const ratio = sampleRate / TARGET_RATE;
+      const newLen = Math.floor(float32.length / ratio);
+      const out = new Float32Array(newLen);
+      for (let i = 0; i < newLen; i++) {
+        const idx = Math.floor(i * ratio);
+        out[i] = float32[idx];
+      }
+      return out;
+    }
+
+    function floatTo16BitPCM(float32) {
+      const buf = new ArrayBuffer(float32.length * 2);
+      const view = new DataView(buf);
+      for (let i = 0; i < float32.length; i++) {
+        let s = Math.max(-1, Math.min(1, float32[i]));
+        view.setInt16(i * 2, s < 0 ? s * 0x8000 : s * 0x7fff, true);
+      }
+      return view;
+    }
+
+    function encodeWav(float32, sampleRate) {
+      const pcm = floatTo16BitPCM(float32);
+      const buffer = new ArrayBuffer(44 + pcm.byteLength);
+      const view = new DataView(buffer);
+      const writeStr = (off, str) => {
+        for (let i = 0; i < str.length; i++) view.setUint8(off + i, str.charCodeAt(i));
+      };
+      writeStr(0, "RIFF");
+      view.setUint32(4, 36 + pcm.byteLength, true);
+      writeStr(8, "WAVE");
+      writeStr(12, "fmt ");
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, 1, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * 2, true);
+      view.setUint16(32, 2, true);
+      view.setUint16(34, 16, true);
+      writeStr(36, "data");
+      view.setUint32(40, pcm.byteLength, true);
+      new Uint8Array(buffer, 44).set(new Uint8Array(pcm.buffer));
+      return new Blob([buffer], { type: "audio/wav" });
+    }
+
+    function mergeBuffers(buffers, length) {
+      const result = new Float32Array(length);
+      let offset = 0;
+      for (const b of buffers) {
+        result.set(b, offset);
+        offset += b.length;
+      }
+      return result;
+    }
+
+    function updateLevel() {
+      if (!analyser || !recording) return;
+      const data = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteTimeDomainData(data);
+      let sum = 0;
+      for (let i = 0; i < data.length; i++) {
+        const v = (data[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / data.length);
+      const pct = Math.min(100, Math.round(rms * 280));
+      document.getElementById("levelBar").style.width = pct + "%";
+      rafId = requestAnimationFrame(updateLevel);
+    }
+
+    async function startRec() {
+      if (recording) return;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true,
+          },
+        });
+      } catch (e) {
+        setResult("metaResult", "Không mở được micro: " + e.message, false);
+        return;
+      }
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      captureRate = audioCtx.sampleRate || 48000;
+      sourceNode = audioCtx.createMediaStreamSource(mediaStream);
+      analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 2048;
+      const bufferSize = 4096;
+      processor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
+      recBuffers = [];
+      recLength = 0;
+      processor.onaudioprocess = (e) => {
+        if (!recording) return;
+        const input = e.inputBuffer.getChannelData(0);
+        recBuffers.push(new Float32Array(input));
+        recLength += input.length;
+      };
+      sourceNode.connect(analyser);
+      sourceNode.connect(processor);
+      processor.connect(audioCtx.destination);
+
+      recording = true;
+      document.getElementById("recDot").classList.add("on");
+      document.getElementById("btnRec").disabled = true;
+      document.getElementById("btnStop").disabled = false;
+      document.getElementById("transcript").textContent = "Đang ghi… nói tiếng Việt rõ ràng.";
+      setResult("metaResult", `Recording… sampleRate=${captureRate}`, null);
+      updateLevel();
+    }
+
+    async function stopRecAndTranscribeFixed() {
+      if (!recording && recBuffers.length === 0) return;
+      const rateBefore = captureRate || (audioCtx && audioCtx.sampleRate) || 48000;
+      recording = false;
+      document.getElementById("recDot").classList.remove("on");
+      document.getElementById("btnStop").disabled = true;
+      document.getElementById("btnRec").disabled = false;
+      cancelAnimationFrame(rafId);
+      document.getElementById("levelBar").style.width = "0%";
+
+      try {
+        if (processor) processor.disconnect();
+        if (sourceNode) sourceNode.disconnect();
+        if (analyser) analyser.disconnect();
+        if (audioCtx && audioCtx.state !== "closed") await audioCtx.close();
+      } catch (_) {}
+      if (mediaStream) {
+        mediaStream.getTracks().forEach((t) => t.stop());
+        mediaStream = null;
+      }
+      audioCtx = null;
+      processor = null;
+      sourceNode = null;
+      analyser = null;
+
+      if (recLength < rateBefore * 0.3) {
+        document.getElementById("transcript").textContent = "(quá ngắn — nói ít nhất ~0.5s)";
+        setResult("metaResult", "Audio quá ngắn", false);
+        return;
+      }
+
+      const merged = mergeBuffers(recBuffers, recLength);
+      const down = downsampleTo16k(merged, rateBefore);
+      const wav = encodeWav(down, TARGET_RATE);
+      document.getElementById("transcript").textContent = "Đang gửi ASR…";
+      await sendWav(wav, "metaResult", "transcript");
+    }
+
+    async function sendWav(blob, resultId, transcriptId) {
+      const form = new FormData();
+      const sessionId = "web_" + Date.now();
+      form.append("session_id", sessionId);
+      form.append("audio", blob, "chunk.wav");
+      const t0 = performance.now();
+      try {
+        const r = await fetch(`${API}/asr/ctc/chunk`, { method: "POST", body: form });
+        const data = await r.json().catch(() => ({}));
+        const ms = Math.round(performance.now() - t0);
+        if (!r.ok) {
+          if (transcriptId) document.getElementById(transcriptId).textContent = "";
+          setResult(resultId, data.detail || data.message || `HTTP ${r.status}`, false);
+          return;
+        }
+        const text =
+          data.transcript ?? data.text ?? data.result ?? "";
+        if (transcriptId) {
+          document.getElementById(transcriptId).textContent =
+            text && String(text).trim() ? text : "(trống — nói to hơn / rõ hơn)";
+        }
+        setResult(
+          resultId,
+          {
+            transcript: text,
+            transcript_raw: data.transcript_raw,
+            duration_seconds: data.duration_seconds,
+            duration_before_trim: data.duration_before_trim,
+            processing_time_seconds: data.processing_time_seconds,
+            real_time_factor: data.real_time_factor,
+            model: data.model,
+            trim: data.trim,
+            dict: data.dict,
+            session_id: data.session_id || sessionId,
+            client_ms: ms,
+            success: data.success,
+          },
+          true
+        );
+      } catch (e) {
+        if (transcriptId) document.getElementById(transcriptId).textContent = "";
+        setResult(resultId, e.message, false);
+      }
+    }
+
+    async function decodeFileToWav(file) {
+      const ab = await file.arrayBuffer();
+      // If already wav, send as-is (server validates format)
+      if (/\.wav$/i.test(file.name) || file.type === "audio/wav") {
+        return new Blob([ab], { type: "audio/wav" });
+      }
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuf = await ctx.decodeAudioData(ab.slice(0));
+      const ch0 = audioBuf.getChannelData(0);
+      // mixdown if multi-channel
+      let mono = ch0;
+      if (audioBuf.numberOfChannels > 1) {
+        mono = new Float32Array(audioBuf.length);
+        for (let c = 0; c < audioBuf.numberOfChannels; c++) {
+          const d = audioBuf.getChannelData(c);
+          for (let i = 0; i < d.length; i++) mono[i] += d[i] / audioBuf.numberOfChannels;
+        }
+      }
+      const down = downsampleTo16k(mono, audioBuf.sampleRate);
+      await ctx.close();
+      return encodeWav(down, TARGET_RATE);
+    }
+
+    document.getElementById("btnRec").addEventListener("click", startRec);
+    document.getElementById("btnStop").addEventListener("click", stopRecAndTranscribeFixed);
+    document.getElementById("btnRefresh").addEventListener("click", loadHealth);
+    document.getElementById("btnUpload").addEventListener("click", async () => {
+      const input = document.getElementById("fileInput");
+      if (!input.files?.length) return setResult("fileResult", "Chọn file audio.", false);
+      setResult("fileResult", "Đang xử lý file…", null);
+      try {
+        const wav = await decodeFileToWav(input.files[0]);
+        await sendWav(wav, "fileResult", null);
+        const dataText = document.getElementById("fileResult").textContent;
+        try {
+          const parsed = JSON.parse(dataText);
+          if (parsed.transcript != null) {
+            document.getElementById("transcript").textContent =
+              parsed.transcript || "(trống)";
+          }
+        } catch (_) {}
+      } catch (e) {
+        setResult("fileResult", e.message, false);
+      }
+    });
+
+    loadHealth();
+    setInterval(loadHealth, 30000);
+  </script>
+</body>
+</html>

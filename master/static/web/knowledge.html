@@ -1,0 +1,633 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Robotuth Knowledge</title>
+  <style>
+    :root {
+      --bg: #edf4f4;
+      --panel: rgba(255,255,255,0.92);
+      --ink: #0f172a;
+      --muted: #5b6475;
+      --brand: #018486;
+      --brand-dark: #01686a;
+      --line: #dbe6e7;
+      --danger: #b42318;
+      --danger-bg: #fef3f2;
+      --ok: #027a48;
+      --ok-bg: #ecfdf3;
+      --warn: #b54708;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at top left, rgba(1,132,134,0.12), transparent 24%);
+    }
+    .page { max-width: 1380px; margin: 0 auto; padding: 28px; }
+    .header {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      gap: 16px; flex-wrap: wrap; margin-bottom: 20px;
+    }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: 999px; padding: 7px 12px;
+      background: rgba(1,132,134,0.1); color: var(--brand-dark);
+      font-size: 12px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase;
+    }
+    h1 { margin: 10px 0 6px; font-size: 32px; }
+    .sub { margin: 0; color: var(--muted); line-height: 1.5; max-width: 720px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid var(--line); background: #fff; color: var(--ink);
+      border-radius: 999px; padding: 11px 16px; cursor: pointer; font-weight: 600;
+      text-decoration: none; font-size: 14px; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+    .btn.primary:hover { background: var(--brand-dark); }
+    .btn.danger { color: var(--danger); border-color: #fecaca; background: #fff; }
+    .btn.ghost { background: #d9e8e7; color: #123235; border-color: transparent; }
+    .btn:disabled { opacity: .55; cursor: not-allowed; }
+    .cards {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px;
+    }
+    .card {
+      background: var(--panel); border: 1px solid rgba(255,255,255,0.72);
+      border-radius: 20px; padding: 16px 18px;
+      box-shadow: 0 12px 40px rgba(15,23,42,0.06);
+    }
+    .card span { display: block; font-size: 12px; color: var(--muted); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .card strong { display: block; margin-top: 8px; font-size: 26px; color: var(--brand); }
+    .grid {
+      display: grid; grid-template-columns: 1.1fr .9fr; gap: 22px; align-items: start;
+    }
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.72);
+      border-radius: 28px;
+      box-shadow: 0 24px 80px rgba(15,23,42,0.08);
+      backdrop-filter: blur(14px);
+      padding: 22px 24px;
+    }
+    .panel.sticky {
+      position: sticky; top: 20px;
+      height: calc(100vh - 40px);
+      display: flex; flex-direction: column;
+    }
+    .panel h2 { margin: 0 0 6px; font-size: 20px; }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 12px; }
+    textarea#instructionBox {
+      width: 100%; flex: 1; min-height: 320px;
+      border-radius: 20px; border: 1px solid var(--line);
+      background: #f8fbfb; padding: 16px 18px;
+      font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      resize: none; color: var(--ink);
+    }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .notice {
+      display: none; margin-top: 12px; border-radius: 14px; padding: 10px 12px;
+      font-size: 13px; line-height: 1.45;
+    }
+    .notice.show { display: block; }
+    .notice.ok { background: var(--ok-bg); color: var(--ok); border: 1px solid #abefc6; }
+    .notice.error { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+    .notice.info { background: #eff8ff; color: #175cd3; border: 1px solid #b2ddff; }
+    .notice.warn { background: #fffaeb; color: var(--warn); border: 1px solid #fedf89; }
+    .upload-box {
+      margin-top: 8px; padding: 16px; border: 1.5px dashed #b7d4d4;
+      border-radius: 20px; background: #f7fbfb;
+    }
+    .upload-box.drag { border-color: var(--brand); background: #eef9f8; }
+    label.file-btn { cursor: pointer; }
+    input[type="file"] { display: none; }
+    .file-name { font-size: 13px; color: var(--muted); flex: 1; min-width: 120px; }
+    .table-wrap {
+      margin-top: 16px; border: 1px solid var(--line); border-radius: 20px;
+      overflow: auto; max-height: 360px;
+    }
+    table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    th, td { padding: 12px 14px; border-top: 1px solid #eef2f3; text-align: left; vertical-align: top; word-break: break-word; font-size: 13px; }
+    th {
+      font-size: 11px; color: var(--muted); letter-spacing: .12em; text-transform: uppercase;
+      background: #f8fbfb; position: sticky; top: 0;
+    }
+    .pill {
+      display: inline-block; padding: 4px 10px; border-radius: 999px;
+      background: #f1f5f9; font-size: 11px; font-weight: 700; text-transform: uppercase;
+    }
+    .pill.ready { background: #dcfce7; color: #166534; }
+    .pill.error { background: #fee2e2; color: #991b1b; }
+    .pill.processing { background: #fef3c7; color: #92400e; }
+    .small { font-size: 12px; color: var(--muted); }
+    .section-title { margin: 22px 0 8px; font-size: 18px; display: flex; align-items: center; gap: 8px; }
+    .test-box textarea, .test-box input {
+      width: 100%; border-radius: 14px; border: 1px solid var(--line);
+      background: #f8fbfb; padding: 12px 14px; font: 14px/1.45 ui-sans-serif, system-ui, sans-serif;
+      color: var(--ink);
+    }
+    .test-box textarea { min-height: 88px; resize: vertical; }
+    .answer {
+      margin-top: 12px; white-space: pre-wrap; padding: 14px; border-radius: 16px;
+      background: #f8fafc; border: 1px solid #e2e8f0; min-height: 72px;
+      font-size: 14px; line-height: 1.55;
+    }
+    .modal-backdrop {
+      display: none; position: fixed; inset: 0; background: rgba(15,23,42,.45);
+      z-index: 40; align-items: center; justify-content: center; padding: 20px;
+    }
+    .modal-backdrop.show { display: flex; }
+    .modal {
+      width: min(900px, 100%); max-height: 85vh; overflow: auto;
+      background: #fff; border-radius: 24px; padding: 22px; box-shadow: 0 30px 80px rgba(0,0,0,.2);
+    }
+    .modal pre {
+      white-space: pre-wrap; font: 13px/1.5 ui-monospace, Menlo, Consolas, monospace;
+      background: #f8fbfb; border: 1px solid var(--line); border-radius: 16px; padding: 14px;
+      max-height: 55vh; overflow: auto;
+    }
+    /* Match the compact ChatUTH :9999 admin layout; RobotUTH keeps its own API. */
+    .header, .cards { display: none; }
+    .grid { grid-template-columns: 1.12fr .88fr; gap: 24px; }
+    .panel { padding: 24px; }
+    .panel.sticky { top: 28px; height: calc(100vh - 56px); }
+    .upload-box { margin-top: 14px; padding: 0; border: 0; border-radius: 0; background: transparent; }
+    .upload-box .row { align-items: center; }
+    .table-wrap { height: 760px; max-height: none; border-radius: 24px; overflow: hidden; }
+    th, td { padding: 14px 16px; }
+    @media (max-width: 1100px) {
+      .grid { grid-template-columns: 1fr; }
+      .panel.sticky { position: static; height: auto; }
+      .cards { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 640px) {
+      .page { padding: 16px; }
+      .cards { grid-template-columns: 1fr; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="header">
+      <div>
+        <div class="badge">Knowledge · System prompt</div>
+        <h1>Tri thức RobotUTH</h1>
+        <p class="sub">
+          File tải lên được trích text và <strong>gộp vào system prompt</strong> cùng hướng dẫn hệ thống.
+          Khi chat, toàn bộ system prompt này được gửi tới model để sinh câu trả lời.
+        </p>
+        <p class="small" id="statusLine" style="margin-top:8px;">Đang kiểm tra...</p>
+      </div>
+      <div class="actions">
+        <a class="btn ghost" href="/static/web/chat.html">Chat</a>
+        <a class="btn ghost" href="/static/web/settings.html">LLM</a>
+        <a class="btn ghost" href="/static/web/asr.html">ASR</a>
+        <a class="btn ghost" href="/static/web/tts.html">TTS</a>
+        <a class="btn ghost" href="/static/web/attendance.html">Attendance</a>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="card"><span>Tài liệu</span><strong id="statDocs">0</strong></div>
+      <div class="card"><span>Sẵn sàng</span><strong id="statReady">0</strong></div>
+      <div class="card"><span>Trong prompt</span><strong id="statInPrompt">0</strong></div>
+      <div class="card"><span>Độ dài prompt</span><strong id="statPromptChars">0</strong></div>
+    </div>
+
+    <div class="grid">
+      <!-- Left: system instruction -->
+      <section class="panel sticky">
+        <div class="row" style="justify-content:space-between;">
+          <div>
+            <h2>System instruction</h2>
+            <p class="hint" style="margin:0;">Hướng dẫn cố định. Text từ mọi file upload sẽ được nối phía sau.</p>
+          </div>
+          <div class="row">
+            <button class="btn" id="resetInstructionBtn" type="button">Mặc định</button>
+            <button class="btn primary" id="saveInstructionBtn" type="button">Lưu</button>
+          </div>
+        </div>
+        <textarea id="instructionBox" spellcheck="false" placeholder="Nhập hướng dẫn hệ thống..."></textarea>
+        <div class="row" style="margin-top:12px; justify-content:space-between;">
+          <span class="small" id="instructionChars">0 ký tự</span>
+          <button class="btn" id="previewPromptBtn" type="button">Xem system prompt đầy đủ</button>
+        </div>
+        <div class="notice" id="instructionNotice"></div>
+      </section>
+
+      <!-- Right: upload + docs + test -->
+      <div>
+        <section class="panel">
+          <h2>Tải tài liệu vào system prompt</h2>
+          <p class="hint">
+            Hỗ trợ PDF, DOCX, TXT. Mỗi file được chuyển thành text và tự động đưa vào system prompt
+            (cùng system instruction). Không cần search chunk riêng để trả lời.
+          </p>
+          <div class="upload-box" id="dropZone">
+            <div class="row">
+              <label class="btn file-btn" for="fileInput">Chọn file</label>
+              <input id="fileInput" type="file" multiple accept=".pdf,.docx,.txt">
+              <span class="file-name" id="fileName">Chưa chọn file</span>
+              <button class="btn primary" id="uploadBtn" type="button">Tải lên</button>
+            </div>
+          </div>
+          <div class="notice" id="uploadNotice"></div>
+
+          <div class="section-title">
+            Danh sách tài liệu
+            <button class="btn" id="refreshDocsBtn" type="button" style="margin-left:auto; padding:8px 12px;">Làm mới</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:44px">ID</th>
+                  <th>Tên file</th>
+                  <th style="width:90px">Trạng thái</th>
+                  <th style="width:80px">Ký tự</th>
+                  <th style="width:150px">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody id="documentsBody">
+                <tr><td colspan="5" class="small">Đang tải...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="panel test-box" style="margin-top:18px;">
+          <h2>Thử hỏi (system prompt → model)</h2>
+          <p class="hint">Gọi <code>/api/knowledge/query</code> — gửi toàn bộ system prompt + câu hỏi tới LLM.</p>
+          <textarea id="queryText" placeholder="Ví dụ: Phòng đào tạo ở đâu?"></textarea>
+          <div class="row" style="margin-top:12px;">
+            <button class="btn primary" id="runQueryBtn" type="button">Hỏi thử</button>
+            <button class="btn" id="runChatBtn" type="button">Hỏi qua /api/chat/query</button>
+          </div>
+          <div class="answer" id="queryAnswer">Câu trả lời sẽ hiện ở đây.</div>
+          <div class="notice" id="queryNotice"></div>
+        </section>
+
+        <section class="panel" style="margin-top:18px;">
+          <h2>Nạp nhanh Q&amp;A / text</h2>
+          <p class="hint">Thêm cặp hỏi–đáp hoặc đoạn text (cũng vào system prompt như file).</p>
+          <div style="display:grid; gap:10px;">
+            <input id="qnaSource" type="text" value="robotuth_qna.txt" placeholder="Tên nguồn">
+            <textarea id="question" placeholder="Câu hỏi" style="min-height:70px; border-radius:14px; border:1px solid var(--line); padding:12px; background:#f8fbfb;"></textarea>
+            <textarea id="answer" placeholder="Câu trả lời chuẩn" style="min-height:70px; border-radius:14px; border:1px solid var(--line); padding:12px; background:#f8fbfb;"></textarea>
+            <div class="row">
+              <button class="btn primary" id="sendQnaBtn" type="button">Nạp Q&amp;A</button>
+              <button class="btn" id="sendTextBtn" type="button">Nạp text (ô trả lời)</button>
+            </div>
+          </div>
+          <div class="notice" id="qnaNotice"></div>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="row" style="justify-content:space-between; margin-bottom:12px;">
+        <h2 id="modalTitle" style="margin:0; font-size:18px;">Nội dung</h2>
+        <button class="btn" id="closeModalBtn" type="button">Đóng</button>
+      </div>
+      <pre id="modalBody"></pre>
+    </div>
+  </div>
+
+  <script src="/static/web/auth.js"></script><script>
+    const API = window.location.origin;
+    let knowledgeOk = false;
+
+    function showNotice(id, message, kind = "info") {
+      const el = document.getElementById(id);
+      el.textContent = message;
+      el.className = "notice show " + kind;
+    }
+    function clearNotice(id) {
+      const el = document.getElementById(id);
+      el.className = "notice";
+      el.textContent = "";
+    }
+
+    async function request(path, options = {}) {
+      const res = await fetch(`${API}${path}`, options);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const detail = data.detail || data.message || data.error || `HTTP ${res.status}`;
+        throw new Error(typeof detail === "string" ? detail : JSON.stringify(detail));
+      }
+      return data;
+    }
+
+    function setEnabled(on) {
+      ["saveInstructionBtn", "resetInstructionBtn", "uploadBtn", "runQueryBtn", "runChatBtn", "sendQnaBtn", "sendTextBtn", "previewPromptBtn"]
+        .forEach(id => { document.getElementById(id).disabled = !on; });
+    }
+
+    async function refreshHealth() {
+      try {
+        const data = await request("/api/knowledge/health");
+        knowledgeOk = Boolean(data.available);
+        document.getElementById("statusLine").textContent = knowledgeOk
+          ? `Knowledge: online · mode=${data.mode || "system_prompt"} · ${data.document_count ?? 0} tài liệu · ${data.system_prompt_chars ?? 0} ký tự prompt`
+          : `Knowledge: offline | ${data.message || data.error || "không sẵn sàng"}`;
+        setEnabled(knowledgeOk);
+        if (knowledgeOk) {
+          await Promise.all([refreshStats(), loadInstruction(), loadDocuments()]);
+        }
+      } catch (err) {
+        knowledgeOk = false;
+        setEnabled(false);
+        document.getElementById("statusLine").textContent = `Knowledge: lỗi | ${err.message}`;
+      }
+    }
+
+    async function refreshStats() {
+      const data = await request("/api/knowledge/stats");
+      document.getElementById("statDocs").textContent = data.documents ?? 0;
+      document.getElementById("statReady").textContent = data.ready_documents ?? 0;
+      document.getElementById("statInPrompt").textContent = data.documents_in_prompt ?? 0;
+      document.getElementById("statPromptChars").textContent = (data.system_prompt_chars ?? 0).toLocaleString();
+    }
+
+    async function loadInstruction() {
+      const data = await request("/api/knowledge/system-instruction");
+      document.getElementById("instructionBox").value = data.content || "";
+      document.getElementById("instructionChars").textContent = `${(data.chars || 0).toLocaleString()} ký tự`;
+    }
+
+    document.getElementById("instructionBox").addEventListener("input", (e) => {
+      document.getElementById("instructionChars").textContent =
+        `${e.target.value.length.toLocaleString()} ký tự`;
+    });
+
+    document.getElementById("saveInstructionBtn").addEventListener("click", async () => {
+      try {
+        const content = document.getElementById("instructionBox").value;
+        await request("/api/knowledge/system-instruction", {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content }),
+        });
+        showNotice("instructionNotice", "Đã lưu system instruction. Nội dung này sẽ nằm đầu system prompt gửi model.", "ok");
+        await refreshStats();
+      } catch (err) {
+        showNotice("instructionNotice", err.message, "error");
+      }
+    });
+
+    document.getElementById("resetInstructionBtn").addEventListener("click", async () => {
+      if (!confirm("Khôi phục system instruction mặc định?")) return;
+      try {
+        const data = await request("/api/knowledge/system-instruction/reset", { method: "POST" });
+        document.getElementById("instructionBox").value = data.content || "";
+        document.getElementById("instructionChars").textContent = `${(data.chars || 0).toLocaleString()} ký tự`;
+        showNotice("instructionNotice", "Đã khôi phục mặc định.", "ok");
+        await refreshStats();
+      } catch (err) {
+        showNotice("instructionNotice", err.message, "error");
+      }
+    });
+
+    document.getElementById("previewPromptBtn").addEventListener("click", async () => {
+      try {
+        const data = await request("/api/knowledge/system-prompt?preview=true");
+        openModal(
+          `System prompt đầy đủ (${(data.total_chars || 0).toLocaleString()} ký tự · ${data.document_count || 0} file)`,
+          data.system_prompt || ""
+        );
+      } catch (err) {
+        showNotice("instructionNotice", err.message, "error");
+      }
+    });
+
+    function statusPill(status) {
+      const s = (status || "").toLowerCase();
+      const cls = s === "ready" ? "ready" : s === "error" ? "error" : "processing";
+      return `<span class="pill ${cls}">${status || "?"}</span>`;
+    }
+
+    async function loadDocuments() {
+      const docs = await request("/api/knowledge/documents");
+      const body = document.getElementById("documentsBody");
+      if (!docs.length) {
+        body.innerHTML = '<tr><td colspan="5" class="small">Chưa có tài liệu. Hãy tải file lên.</td></tr>';
+        return;
+      }
+      body.innerHTML = docs.map(doc => {
+        const chars = doc.full_text_chars ?? doc.total_chars ?? 0;
+        return `
+          <tr>
+            <td>${doc.id}</td>
+            <td>
+              <div style="font-weight:700;">${escapeHtml(doc.filename || "")}</div>
+              <div class="small">${doc.file_type || ""} · ${doc.total_chunks ?? 0} chunks</div>
+              ${doc.error_message ? `<div class="small" style="color:var(--danger)">${escapeHtml(doc.error_message)}</div>` : ""}
+            </td>
+            <td>${statusPill(doc.status)}</td>
+            <td>${Number(chars).toLocaleString()}</td>
+            <td>
+              <button class="btn" style="padding:6px 10px;margin:2px;" onclick="viewDoc(${doc.id})">Xem</button>
+              <button class="btn danger" style="padding:6px 10px;margin:2px;" onclick="deleteDoc(${doc.id})">Xóa</button>
+            </td>
+          </tr>`;
+      }).join("");
+    }
+
+    function escapeHtml(s) {
+      return String(s)
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    window.viewDoc = async function (id) {
+      try {
+        const doc = await request(`/api/knowledge/documents/${id}`);
+        const text = doc.full_text
+          || (doc.chunks || []).map(c => c.content).join("\n\n")
+          || "(trống)";
+        openModal(`#${id} · ${doc.filename}`, text);
+      } catch (err) {
+        showNotice("uploadNotice", err.message, "error");
+      }
+    };
+
+    window.deleteDoc = async function (id) {
+      if (!confirm(`Xóa tài liệu #${id}? Text sẽ bị gỡ khỏi system prompt.`)) return;
+      try {
+        await request(`/api/knowledge/documents/${id}`, { method: "DELETE" });
+        showNotice("uploadNotice", `Đã xóa #${id}.`, "ok");
+        await Promise.all([refreshStats(), loadDocuments()]);
+      } catch (err) {
+        showNotice("uploadNotice", err.message, "error");
+      }
+    };
+
+    document.getElementById("fileInput").addEventListener("change", (e) => {
+      const files = e.target.files;
+      document.getElementById("fileName").textContent =
+        !files?.length ? "Chưa chọn file"
+          : files.length === 1 ? files[0].name
+          : `${files.length} files selected`;
+    });
+
+    const dropZone = document.getElementById("dropZone");
+    ["dragenter", "dragover"].forEach(ev => dropZone.addEventListener(ev, (e) => {
+      e.preventDefault(); dropZone.classList.add("drag");
+    }));
+    ["dragleave", "drop"].forEach(ev => dropZone.addEventListener(ev, (e) => {
+      e.preventDefault(); dropZone.classList.remove("drag");
+    }));
+    dropZone.addEventListener("drop", (e) => {
+      const dt = e.dataTransfer;
+      if (dt?.files?.length) {
+        document.getElementById("fileInput").files = dt.files;
+        document.getElementById("fileInput").dispatchEvent(new Event("change"));
+      }
+    });
+
+    document.getElementById("uploadBtn").addEventListener("click", async () => {
+      const input = document.getElementById("fileInput");
+      const files = Array.from(input.files || []);
+      if (!files.length) return showNotice("uploadNotice", "Chọn ít nhất một file.", "warn");
+      const btn = document.getElementById("uploadBtn");
+      btn.disabled = true;
+      const results = [];
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          showNotice("uploadNotice", `Đang tải ${i + 1}/${files.length}: ${file.name}…`, "info");
+          const form = new FormData();
+          form.append("file", file);
+          try {
+            const data = await request("/api/knowledge/documents", { method: "POST", body: form });
+            results.push({ filename: file.name, ok: true, document: data.document });
+          } catch (err) {
+            results.push({ filename: file.name, ok: false, error: err.message });
+          }
+        }
+        const ok = results.filter(r => r.ok).length;
+        const fail = results.length - ok;
+        showNotice(
+          "uploadNotice",
+          `${ok} file đã nạp vào system prompt` + (fail ? `, ${fail} lỗi: ${results.filter(r => !r.ok).map(r => r.filename + ": " + r.error).join("; ")}` : "."),
+          fail ? "warn" : "ok"
+        );
+        input.value = "";
+        document.getElementById("fileName").textContent = "Chưa chọn file";
+        await Promise.all([refreshStats(), loadDocuments(), refreshHealth()]);
+      } finally {
+        btn.disabled = !knowledgeOk;
+      }
+    });
+
+    document.getElementById("refreshDocsBtn").addEventListener("click", async () => {
+      await Promise.all([refreshStats(), loadDocuments(), refreshHealth()]);
+    });
+
+    document.getElementById("sendQnaBtn").addEventListener("click", async () => {
+      try {
+        showNotice("qnaNotice", "Đang nạp Q&A…", "info");
+        await request("/api/knowledge/qna", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            question: document.getElementById("question").value.trim(),
+            answer: document.getElementById("answer").value.trim(),
+            source: document.getElementById("qnaSource").value.trim() || "robotuth_qna.txt",
+          }),
+        });
+        showNotice("qnaNotice", "Đã nạp Q&A vào system prompt.", "ok");
+        document.getElementById("question").value = "";
+        document.getElementById("answer").value = "";
+        await Promise.all([refreshStats(), loadDocuments()]);
+      } catch (err) {
+        showNotice("qnaNotice", err.message, "error");
+      }
+    });
+
+    document.getElementById("sendTextBtn").addEventListener("click", async () => {
+      try {
+        const text = document.getElementById("answer").value.trim();
+        if (!text) return showNotice("qnaNotice", "Nhập text vào ô trả lời.", "warn");
+        showNotice("qnaNotice", "Đang nạp text…", "info");
+        await request("/api/knowledge/text", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            source: document.getElementById("qnaSource").value.trim() || "robotuth_text.txt",
+          }),
+        });
+        showNotice("qnaNotice", "Đã nạp text vào system prompt.", "ok");
+        await Promise.all([refreshStats(), loadDocuments()]);
+      } catch (err) {
+        showNotice("qnaNotice", err.message, "error");
+      }
+    });
+
+    async function runAsk(path, body) {
+      const answerEl = document.getElementById("queryAnswer");
+      answerEl.textContent = "Đang hỏi model…";
+      clearNotice("queryNotice");
+      try {
+        const data = await request(path, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const text = data.answer || data.response || data.message || JSON.stringify(data, null, 2);
+        answerEl.textContent = text;
+        const meta = [
+          data.mode && `mode=${data.mode}`,
+          data.document_count != null && `docs=${data.document_count}`,
+          data.system_prompt_chars != null && `prompt=${data.system_prompt_chars} chars`,
+          data.latency_ms != null && `${data.latency_ms}ms`,
+        ].filter(Boolean).join(" · ");
+        if (meta) showNotice("queryNotice", meta, "info");
+      } catch (err) {
+        answerEl.textContent = "";
+        showNotice("queryNotice", err.message, "error");
+      }
+    }
+
+    document.getElementById("runQueryBtn").addEventListener("click", () => {
+      const q = document.getElementById("queryText").value.trim();
+      if (!q) return showNotice("queryNotice", "Nhập câu hỏi.", "warn");
+      runAsk("/api/knowledge/query", { query: q, include_sources: true, use_system_prompt: true });
+    });
+
+    document.getElementById("runChatBtn").addEventListener("click", () => {
+      const q = document.getElementById("queryText").value.trim();
+      if (!q) return showNotice("queryNotice", "Nhập câu hỏi.", "warn");
+      runAsk("/api/chat/query", { query: q, include_references: true });
+    });
+
+    function openModal(title, body) {
+      document.getElementById("modalTitle").textContent = title;
+      document.getElementById("modalBody").textContent = body;
+      document.getElementById("modal").classList.add("show");
+    }
+    document.getElementById("closeModalBtn").addEventListener("click", () => {
+      document.getElementById("modal").classList.remove("show");
+    });
+    document.getElementById("modal").addEventListener("click", (e) => {
+      if (e.target.id === "modal") document.getElementById("modal").classList.remove("show");
+    });
+
+    refreshHealth();
+  </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="model_names">
+        <item>vosk-en-us-0.15</item>
+    </string-array>
+    <string-array name="model_paths">
+        <item>models/vosk-model-small-en-us-0.15</item>
+    </string-array>
+    <integer-array name="model_archs">
+        <item>0</item>
+    </integer-array>
+</resources>

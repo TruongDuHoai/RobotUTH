@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RobotUTH Admin</title>
+  <style>
+    :root {
+      --bg: #edf4f4;
+      --panel: rgba(255,255,255,0.94);
+      --ink: #0f172a;
+      --muted: #5b6475;
+      --brand: #018486;
+      --brand-dark: #01686a;
+      --line: #dbe6e7;
+      --ok: #027a48;
+      --ok-bg: #ecfdf3;
+      --warn: #b54708;
+      --warn-bg: #fffaeb;
+      --err: #b42318;
+      --err-bg: #fef3f2;
+    }
+    * { box-sizing: border-box; }
+    html, body { min-height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at top left, rgba(1,132,134,0.14), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(1,132,134,0.08), transparent 30%);
+    }
+    .page {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 32px 24px 48px;
+      position: relative;
+    }
+    .hero {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 28px;
+      box-shadow: 0 24px 80px rgba(15,23,42,0.08);
+      backdrop-filter: blur(12px);
+      padding: 28px 32px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      margin-bottom: 22px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 7px 12px;
+      background: rgba(1,132,134,0.1);
+      color: var(--brand-dark);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 10px 0 8px;
+      font-size: 34px;
+      line-height: 1.15;
+    }
+    .sub {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+      max-width: 640px;
+    }
+    .logo {
+      width: 120px;
+      height: 48px;
+      object-fit: contain;
+      flex-shrink: 0;
+    }
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      border-radius: 999px;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid var(--line);
+      background: #f8fbfb;
+      color: var(--muted);
+    }
+    .pill.ok { background: var(--ok-bg); color: var(--ok); border-color: #abefc6; }
+    .pill.warn { background: var(--warn-bg); color: var(--warn); border-color: #fedf89; }
+    .pill.err { background: var(--err-bg); color: var(--err); border-color: #fecaca; }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: currentColor; opacity: .85;
+    }
+    .section-title {
+      margin: 8px 4px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+    a.card {
+      text-decoration: none;
+      color: inherit;
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.75);
+      border-radius: 24px;
+      box-shadow: 0 16px 50px rgba(15,23,42,0.06);
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 168px;
+      transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease;
+    }
+    a.card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(1,132,134,0.45);
+      box-shadow: 0 22px 60px rgba(15,23,42,0.1);
+    }
+    .card-num {
+      width: 36px;
+      height: 36px;
+      border-radius: 12px;
+      background: var(--brand);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 20px;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.5;
+      flex: 1;
+    }
+    .card .go {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--brand-dark);
+    }
+    .foot {
+      margin-top: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+      text-align: center;
+    }
+    .foot code {
+      background: #f1f5f9;
+      padding: 2px 7px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+    @media (max-width: 960px) {
+      .grid { grid-template-columns: 1fr 1fr; }
+      h1 { font-size: 28px; }
+    }
+    @media (max-width: 640px) {
+      .page { padding: 18px 14px 36px; }
+      .grid { grid-template-columns: 1fr; }
+      .hero { padding: 22px; }
+      h1 { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div>
+        <div class="badge">RobotUTH · Web Admin</div>
+        <h1>Xin chào, tôi có thể giúp gì cho bạn?</h1>
+        <p class="sub">
+          Trang quản trị robot: chat tri thức (system prompt), nạp tài liệu, điểm danh khuôn mặt,
+          cấu hình LLM và TTS. Chỉ truy cập qua <strong>Tailscale</strong>.
+        </p>
+        <div class="status-row" id="statusRow">
+          <span class="pill" id="pillServer"><span class="dot"></span>API: đang kiểm tra…</span>
+          <span class="pill" id="pillAsr"><span class="dot"></span>ASR: …</span>
+          <span class="pill" id="pillKnowledge"><span class="dot"></span>Knowledge: …</span>
+          <span class="pill" id="pillTts"><span class="dot"></span>TTS: …</span>
+        </div>
+      </div>
+      <img class="logo" src="/static/web/logo.png" alt="UTH" onerror="this.style.display='none'">
+    </section>
+
+    <div class="section-title">Chức năng chính</div>
+    <div class="grid">
+      <a class="card" href="/static/web/chat.html">
+        <div class="card-num">1</div>
+        <h2>Chat tri thức</h2>
+        <p>Hỏi đáp knowledge-first: system instruction + toàn bộ file đã nạp → model sinh câu trả lời.</p>
+        <span class="go">Mở chat →</span>
+      </a>
+
+      <a class="card" href="/static/web/knowledge.html">
+        <div class="card-num">2</div>
+        <h2>Knowledge</h2>
+        <p>Sửa system instruction, upload PDF/DOCX/TXT/Q&amp;A. Text file tự gộp vào system prompt.</p>
+        <span class="go">Quản lý tri thức →</span>
+      </a>
+
+      <a class="card" href="/static/web/attendance.html" id="cardAttendance" hidden>
+        <div class="card-num">3</div>
+        <h2>Điểm danh</h2>
+        <p>Đăng ký / nhận diện khuôn mặt (InsightFace + Postgres + Redis).</p>
+        <span class="go">Mở attendance →</span>
+      </a>
+
+      <a class="card" href="/static/web/settings.html">
+        <div class="card-num">4</div>
+        <h2>LLM Settings</h2>
+        <p>Endpoint OpenAI-compatible, API key, model, reasoning effort — lưu <code>data/runtime_settings.json</code>.</p>
+        <span class="go">Cấu hình model →</span>
+      </a>
+
+      <a class="card" href="/static/web/asr.html">
+        <div class="card-num">5</div>
+        <h2>ASR Test</h2>
+        <p>Health Parakeet CTC + ghi mic / upload WAV. Proxy Docker → host GPU :8002.</p>
+        <span class="go">Mở ASR →</span>
+      </a>
+
+      <a class="card" href="/static/web/tts.html">
+        <div class="card-num">6</div>
+        <h2>TTS Test</h2>
+        <p>Thử VieNeU / giọng ngọc-huyền, clone và kiểm tra proxy TTS.</p>
+        <span class="go">Mở TTS →</span>
+      </a>
+
+      <a class="card" href="https://vr.uth.edu.vn/" target="_blank" rel="noopener noreferrer">
+        <div class="card-num">7</div>
+        <h2>Bản đồ 3D</h2>
+        <p>Campus VR Pano2VR (vr.uth.edu.vn). Mở tab mới — cần mạng + WebGL.</p>
+        <span class="go">Mở bản đồ →</span>
+      </a>
+
+      <a class="card" href="/static/web/issues.html">
+        <div class="card-num">8</div>
+        <h2>Phiếu phản ánh</h2>
+        <p>Xem, phân công và trả lời các phản ánh gửi từ robot.</p>
+        <span class="go">Mở phiếu →</span>
+      </a>
+    </div>
+
+    <p class="foot">
+      API LAN/Tailscale: <code id="apiBase">…</code><br>
+      App Android: Nhắn tin · Điểm danh · Trò chuyện (mic) · Bản đồ 3D · Server mặc định Tailscale :8001
+    </p>
+  </div>
+
+  <script>
+    const API = window.location.origin;
+    document.getElementById("apiBase").textContent = API;
+
+    function setPill(id, ok, label) {
+      const el = document.getElementById(id);
+      el.className = "pill " + (ok === true ? "ok" : ok === false ? "err" : "warn");
+      el.innerHTML = `<span class="dot"></span>${label}`;
+    }
+
+    function formatAsrPill(d) {
+      if (!d || d.available === false) {
+        const err = d?.error || d?.message || "offline";
+        return { ok: false, label: `ASR: ${err}` };
+      }
+      const parts = ["ASR: online"];
+      if (d.device) parts.push(d.device);
+      if (d.model_loaded === true) parts.push("model OK");
+      if (d.model) {
+        const short = String(d.model).replace(/^nvidia\//, "");
+        parts.push(short);
+      }
+      if (d.vram_mb != null) parts.push(`${Math.round(Number(d.vram_mb))}MB`);
+      return { ok: true, label: parts.join(" · ") };
+    }
+
+    async function checkHealth() {
+      try {
+        const r = await fetch(`${API}/health`, { cache: "no-store" });
+        const d = await r.json().catch(() => ({}));
+        // Attendance card follows the server's FACE_ENABLED flag (off by default)
+        const attendanceOn = d.services?.attendance === "enabled";
+        document.getElementById("cardAttendance").hidden = !attendanceOn;
+        if (r.ok) {
+          const tts = d.services?.tts;
+          const ttsOk = tts === "online" || tts === "enabled" || tts === true;
+          setPill("pillServer", true, `API: online`);
+          setPill(
+            "pillTts",
+            ttsOk ? true : tts ? false : null,
+            `TTS: ${tts || "n/a"}`
+          );
+          // Prefer detailed asr_detail from /health
+          const detail = d.services?.asr_detail;
+          if (detail && typeof detail === "object") {
+            const asr = formatAsrPill({
+              available: detail.available,
+              device: detail.device,
+              model_loaded: detail.model_loaded,
+              model: detail.model,
+              vram_mb: detail.vram_mb,
+              message: d.services?.asr,
+            });
+            setPill("pillAsr", asr.ok, asr.label);
+          } else {
+            const asr = d.services?.asr;
+            const ok = asr === "online" || asr === "proxy_online" || asr === "local";
+            setPill("pillAsr", ok ? true : asr ? false : null, `ASR: ${asr || "n/a"}`);
+          }
+        } else {
+          setPill("pillServer", false, `API: HTTP ${r.status}`);
+          setPill("pillTts", null, "TTS: ?");
+          setPill("pillAsr", null, "ASR: ?");
+        }
+      } catch (e) {
+        setPill("pillServer", false, `API: lỗi kết nối`);
+        setPill("pillTts", null, "TTS: ?");
+        setPill("pillAsr", null, "ASR: ?");
+      }
+
+      // Dedicated ASR probe (richer fields if /health detail missing)
+      try {
+        const r = await fetch(`${API}/asr/health`, { cache: "no-store" });
+        const d = await r.json().catch(() => ({}));
+        const asr = formatAsrPill(d);
+        setPill("pillAsr", asr.ok, asr.label);
+      } catch (e) {
+        /* keep pill from /health if asr/health fails */
+      }
+
+      try {
+        const r = await fetch(`${API}/api/knowledge/health`, { cache: "no-store" });
+        const d = await r.json().catch(() => ({}));
+        if (d.available) {
+          const n = d.document_count != null ? d.document_count : "?";
+          const chars = d.system_prompt_chars != null
+            ? ` · ${Number(d.system_prompt_chars).toLocaleString()} chars`
+            : "";
+          setPill(
+            "pillKnowledge",
+            true,
+            `Knowledge: ${d.mode || "online"} · ${n} file${chars}`
+          );
+        } else {
+          setPill("pillKnowledge", false, `Knowledge: ${d.message || d.error || "offline"}`);
+        }
+      } catch (e) {
+        setPill("pillKnowledge", false, "Knowledge: lỗi kết nối");
+      }
+    }
+
+    checkHealth();
+    setInterval(checkHealth, 30000);
+  </script>
+</body>
+</html>

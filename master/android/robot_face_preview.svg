@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300" viewBox="0 0 300 300">
+  <!-- ===== BODY / SHOULDERS ===== -->
+  <rect x="129.75" y="195.3" width="40.5" height="31.5" rx="9" fill="#018486"/>
+  <path d="M78,244.5 Q70.8,181.5 125.25,177 L174.75,177 Q229.2,181.5 222,244.5 Z" fill="#018486"/>
+  <line x1="150" y1="204.3" x2="150" y2="267.3" stroke="#ffffff" stroke-opacity="0.3" stroke-width="5.4" stroke-linecap="round"/>
+
+  <!-- ===== EARS ===== -->
+  <circle cx="54.96" cy="109.5" r="12.6" fill="#015A5C"/>
+  <circle cx="54.96" cy="109.5" r="6.3" fill="#ffffff" fill-opacity="0.4"/>
+  <circle cx="245.04" cy="109.5" r="12.6" fill="#015A5C"/>
+  <circle cx="245.04" cy="109.5" r="6.3" fill="#ffffff" fill-opacity="0.4"/>
+
+  <!-- ===== ANTENNA ===== -->
+  <line x1="150" y1="46.8" x2="153.6" y2="12.6" stroke="#015A5C" stroke-width="3.6" stroke-linecap="round"/>
+  <circle cx="153.6" cy="12.6" r="16.2" fill="#03B8BB" fill-opacity="0.15"/>
+  <circle cx="153.6" cy="12.6" r="9" fill="#03B8BB"/>
+  <circle cx="151.8" cy="10.8" r="3.15" fill="#ffffff" fill-opacity="0.7"/>
+
+  <!-- ===== HEAD ===== -->
+  <circle cx="152" cy="139.8" r="91.8" fill="#000000" fill-opacity="0.03"/>
+  <circle cx="150" cy="136.8" r="90" fill="#ffffff"/>
+  <circle cx="150" cy="136.8" r="90" fill="none" stroke="#DCEFEF" stroke-width="3.6"/>
+
+  <!-- ===== EYES (Idle = happy arcs) ===== -->
+  <path d="M92.4,133.38 Q112.2,107.64 132,133.38" fill="none" stroke="#1E293B" stroke-width="8.91" stroke-linecap="round"/>
+  <path d="M168,133.38 Q187.8,107.64 207.6,133.38" fill="none" stroke="#1E293B" stroke-width="8.91" stroke-linecap="round"/>
+
+  <!-- ===== CHEEK BLUSH ===== -->
+  <ellipse cx="90.87" cy="154.62" rx="12.87" ry="7.02" fill="#03B8BB" fill-opacity="0.2"/>
+  <ellipse cx="211.47" cy="154.62" rx="12.87" ry="7.02" fill="#03B8BB" fill-opacity="0.2"/>
+
+  <!-- ===== EYEBROWS ===== -->
+  <line x1="95.7" y1="100.8" x2="128.7" y2="100.8" stroke="#1E293B" stroke-opacity="0.3" stroke-width="3" stroke-linecap="round" transform="rotate(-2 112.2 100.8)"/>
+  <line x1="171.3" y1="100.8" x2="204.3" y2="100.8" stroke="#1E293B" stroke-opacity="0.3" stroke-width="3" stroke-linecap="round" transform="rotate(2 187.8 100.8)"/>
+
+  <!-- ===== MOUTH (Idle = big smile) ===== -->
+  <path d="M123,158.94 Q141.9,192.96 150,167.04" fill="none" stroke="#018486" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M150,167.04 Q158.1,192.96 177,158.94" fill="none" stroke="#018486" stroke-width="3.5" stroke-linecap="round"/>
+</svg>

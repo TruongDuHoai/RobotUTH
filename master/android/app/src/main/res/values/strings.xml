@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">RobotUTH V3</string>
+    <string name="title_face_detection">Face Detection</string>
+    <string name="title_face_enroll">Face Enrollment</string>
+    <string name="title_face_recognize">Face Recognition</string>
+    <string name="btn_enroll">Enroll Face</string>
+    <string name="btn_recognize">Recognize</string>
+    <string name="btn_detect">Detect</string>
+    <string name="hint_name">Enter name</string>
+    <string name="status_ready">Ready</string>
+    <string name="status_processing">Processing...</string>
+    <string name="error_no_face">No face detected</string>
+    <string name="error_multiple_faces">Multiple faces detected</string>
+    <string name="success_enrolled">Face enrolled successfully</string>
+    <string name="success_recognized">Recognized: %1$s</string>
+    <string name="not_recognized">Face not recognized</string>
+    <string name="server_url">Server URL</string>
+    <string name="permission_camera">Camera permission is required</string>
+    <string name="btn_settings">Settings</string>
+    <string name="btn_stt">🎤 STT</string>
+    <string name="stt_listening">Listening...</string>
+    <string name="stt_processing">Processing speech...</string>
+    <string name="stt_result">You said: %1$s</string>
+    <string name="stt_error">STT error: %1$s</string>
+    <string name="permission_audio">Audio recording permission required</string>
+    <string name="btn_test_face_detect">1. Face Detect</string>
+    <string name="btn_test_face_recognize">2. Face Recognize</string>
+    <string name="btn_test_stt">3. STT</string>
+</resources>

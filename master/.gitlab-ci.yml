@@ -1,0 +1,35 @@
+# GitLab CI — lint + test for the robotuth backend.
+#
+# Runs on the university GitLab (git.ut.edu.vn/Robot.git). Requires a runner
+# using the Docker executor. If the instance has no shared runner available,
+# run the same two commands locally instead (see README "Kiểm thử & lint").
+#
+# No database and no GPU are needed: the test suite monkeypatches the DB
+# connection, and insightface/torch/nemo are imported lazily by the app.
+
+stages:
+  - lint
+  - test
+
+default:
+  image: python:3.12-slim
+  cache:
+    key: pip
+    paths:
+      - .cache/pip
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+
+ruff:
+  stage: lint
+  script:
+    - pip install --quiet -e '.[dev]'
+    - ruff check .
+
+pytest:
+  stage: test
+  script:
+    - pip install --quiet -e '.[dev]'
+    - pytest -q

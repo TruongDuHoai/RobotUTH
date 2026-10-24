@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robotuth Attendance</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: Arial, Helvetica, sans-serif; }
+    body { min-height: 100vh; background: #eef6f5; color: #102027; }
+    .app { max-width: 1180px; margin: 0 auto; padding: 28px; }
+    header { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 20px; flex-wrap: wrap; }
+    h1 { font-size: 30px; color: #0f172a; }
+    .status { color: #475569; font-size: 14px; margin-top: 6px; }
+    .actions, .tabs { display: flex; gap: 10px; flex-wrap: wrap; }
+    a, button { border: 0; border-radius: 8px; padding: 10px 14px; background: #006f72; color: #fff; cursor: pointer; font-size: 14px; text-decoration: none; }
+    a.secondary, button.secondary, .tab { background: #d9e8e7; color: #123235; }
+    .tab.active { background: #006f72; color: #fff; }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .tabs { margin-bottom: 16px; }
+    .panel { display: none; background: #fff; border: 1px solid #dbe7e7; border-radius: 10px; padding: 22px; box-shadow: 0 12px 34px rgba(15,23,42,.08); }
+    .panel.active { display: block; }
+    .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .field { margin-bottom: 16px; }
+    .full { grid-column: 1 / -1; }
+    label { display: block; font-weight: 700; margin-bottom: 8px; color: #0f172a; }
+    input, textarea, select { width: 100%; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; font-size: 15px; color: #0f172a; background: #fff; }
+    .drop { border: 2px dashed #8bb9b9; border-radius: 8px; background: #f7fbfb; padding: 22px; }
+    .preview { margin-top: 12px; max-width: 320px; border-radius: 8px; border: 1px solid #e2e8f0; display: none; }
+    .result { white-space: pre-wrap; margin-top: 18px; min-height: 86px; padding: 14px; border-radius: 8px; background: #f8fafc; border: 1px solid #e2e8f0; color: #1e293b; font-family: Consolas, monospace; font-size: 13px; line-height: 1.45; overflow: auto; }
+    .result.ok { background: #ecfdf5; border-color: #86efac; color: #065f46; }
+    .result.err { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 14px; }
+    th, td { text-align: left; border-bottom: 1px solid #e2e8f0; padding: 10px; font-size: 14px; vertical-align: top; }
+    th { background: #f8fafc; color: #334155; }
+    .danger { background: #b91c1c; }
+    .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+    .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; }
+    .card span { color: #64748b; font-size: 13px; }
+    .card strong { display: block; font-size: 24px; color: #006f72; margin-top: 6px; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 999px; font-size: 12px; background: #d9e8e7; color: #123235; }
+    .badge.ok { background: #dcfce7; color: #166534; }
+    .badge.no { background: #fee2e2; color: #991b1b; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+    @media (max-width: 760px) { .app { padding: 18px; } header, .grid, .cards { display: grid; grid-template-columns: 1fr; } h1 { font-size: 24px; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <div>
+        <h1>Quản lý điểm danh</h1>
+        <div class="status" id="status">Attendance: đang kiểm tra...</div>
+      </div>
+      <div class="actions">
+        <a class="secondary" href="/static/web/knowledge.html">Knowledge</a>
+        <a class="secondary" href="/static/web/settings.html">LLM</a>
+        <a class="secondary" href="/static/web/tts.html">TTS</a>
+        <a class="secondary" href="/static/web/chat.html">Chat</a>
+        <a class="secondary" href="/static/index.html">Home</a>
+      </div>
+    </header>
+
+    <div class="cards">
+      <div class="card"><span>Khuôn mặt đã đăng ký</span><strong id="statFaces">0</strong></div>
+      <div class="card"><span>Lượt điểm danh</span><strong id="statHistory">0</strong></div>
+      <div class="card"><span>Server</span><strong id="statServer" style="font-size:16px;">-</strong></div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-panel="enrollPanel">Đăng ký khuôn mặt</button>
+      <button class="tab" data-panel="facesPanel">Danh sách</button>
+      <button class="tab" data-panel="historyPanel">Lịch sử điểm danh</button>
+      <button class="tab" data-panel="testPanel">Thử nhận diện</button>
+    </div>
+
+    <section class="panel active" id="enrollPanel">
+      <div class="grid">
+        <div class="field">
+          <label for="enrollName">Họ tên *</label>
+          <input id="enrollName" placeholder="Nguyễn Văn A">
+        </div>
+        <div class="field">
+          <label for="enrollUserId">Mã / User ID</label>
+          <input id="enrollUserId" placeholder="SV001 (tuỳ chọn)">
+        </div>
+        <div class="field full">
+          <div class="drop">
+            <label for="enrollFile">Ảnh khuôn mặt (1 người, rõ mặt)</label>
+            <input id="enrollFile" type="file" accept="image/jpeg,image/png,image/webp">
+            <img id="enrollPreview" class="preview" alt="preview">
+          </div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button id="btnDetect">Kiểm tra phát hiện mặt</button>
+        <button id="btnEnroll">Đăng ký khuôn mặt</button>
+      </div>
+      <div class="result" id="enrollResult"></div>
+    </section>
+
+    <section class="panel" id="facesPanel">
+      <div class="toolbar">
+        <button id="refreshFaces">Làm mới</button>
+      </div>
+      <table>
+        <thead>
+          <tr><th>ID</th><th>Họ tên</th><th>User ID</th><th>Ngày tạo</th><th>Thao tác</th></tr>
+        </thead>
+        <tbody id="facesBody"><tr><td colspan="5">Đang tải...</td></tr></tbody>
+      </table>
+      <div class="result" id="facesResult"></div>
+    </section>
+
+    <section class="panel" id="historyPanel">
+      <div class="toolbar">
+        <button id="refreshHistory">Làm mới</button>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:400;">
+          Giới hạn
+          <input id="historyLimit" type="number" min="10" max="500" value="100" style="width:90px;">
+        </label>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Thời gian</th><th>Họ tên</th><th>Face ID</th><th>User ID</th><th>Record ID</th></tr>
+        </thead>
+        <tbody id="historyBody"><tr><td colspan="5">Đang tải...</td></tr></tbody>
+      </table>
+      <div class="result" id="historyResult"></div>
+    </section>
+
+    <section class="panel" id="testPanel">
+      <div class="field full">
+        <div class="drop">
+          <label for="testFile">Ảnh cần nhận diện</label>
+          <input id="testFile" type="file" accept="image/jpeg,image/png,image/webp">
+          <img id="testPreview" class="preview" alt="preview">
+        </div>
+      </div>
+      <button id="btnRecognize">Nhận diện</button>
+      <div class="result" id="testResult"></div>
+    </section>
+  </main>
+
+  <script src="/static/web/auth.js"></script><script>
+    const API_BASE_URL = window.location.origin;
+    let attendanceOnline = false;
+    let currentImageBase64 = null;
+    let testImageBase64 = null;
+
+    function setResult(id, value, ok = null) {
+      const el = document.getElementById(id);
+      el.textContent = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+      el.classList.remove('ok', 'err');
+      if (ok === true) el.classList.add('ok');
+      if (ok === false) el.classList.add('err');
+    }
+
+    async function postJson(path, body) {
+      const response = await fetch(`${API_BASE_URL}${path}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const detail = Array.isArray(data.detail)
+          ? data.detail.map(d => d.msg || JSON.stringify(d)).join('; ')
+          : (data.detail || data.message || `HTTP ${response.status}`);
+        throw new Error(detail);
+      }
+      return data;
+    }
+
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result.split(',')[1]);
+        reader.onerror = () => reject(new Error('Không đọc được file ảnh'));
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function bindPreview(inputId, previewId, onReady) {
+      document.getElementById(inputId).addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        const preview = document.getElementById(previewId);
+        if (!file) {
+          preview.style.display = 'none';
+          onReady(null);
+          return;
+        }
+        preview.src = URL.createObjectURL(file);
+        preview.style.display = 'block';
+        try {
+          onReady(await fileToBase64(file));
+        } catch (error) {
+          onReady(null);
+          setResult('enrollResult', `Lỗi đọc ảnh: ${error.message}`, false);
+        }
+      });
+    }
+
+    function setEnabled(enabled) {
+      ['btnDetect', 'btnEnroll', 'btnRecognize', 'refreshFaces', 'refreshHistory'].forEach(id => {
+        document.getElementById(id).disabled = !enabled;
+      });
+    }
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      return Number.isNaN(date.getTime()) ? value : date.toLocaleString('vi-VN');
+    }
+
+    async function refreshHealth() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/health`);
+        const data = await response.json();
+        attendanceOnline = data.status === 'healthy' && data.services?.attendance === 'enabled';
+        document.getElementById('status').textContent = attendanceOnline
+          ? 'Attendance: online'
+          : `Attendance: offline | ${JSON.stringify(data.services || data)}`;
+        document.getElementById('statServer').textContent = API_BASE_URL.replace(/^https?:\/\//, '');
+        setEnabled(attendanceOnline);
+        if (attendanceOnline) await Promise.all([refreshFaces(), refreshHistory()]);
+      } catch (error) {
+        attendanceOnline = false;
+        document.getElementById('status').textContent = `Attendance: lỗi kết nối | ${error.message}`;
+        setEnabled(false);
+      }
+    }
+
+    async function refreshFaces() {
+      const data = await fetch(`${API_BASE_URL}/api/attendance/face/list`).then(r => r.json());
+      document.getElementById('statFaces').textContent = data.count ?? 0;
+      const body = document.getElementById('facesBody');
+      const faces = data.faces || [];
+      if (!faces.length) {
+        body.innerHTML = '<tr><td colspan="5">Chưa có khuôn mặt nào.</td></tr>';
+        return;
+      }
+      body.innerHTML = faces.map(face => `
+        <tr>
+          <td><code>${face.id}</code></td>
+          <td>${face.name}</td>
+          <td>${face.user_id || '-'}</td>
+          <td>${formatDate(face.created_at)}</td>
+          <td><button class="danger" onclick="deleteFace('${face.id}', '${face.name.replace(/'/g, "\\'")}')">Xóa</button></td>
+        </tr>`).join('');
+    }
+
+    async function refreshHistory() {
+      const limit = Number(document.getElementById('historyLimit').value) || 100;
+      const data = await fetch(`${API_BASE_URL}/api/attendance/face/history?limit=${limit}`).then(r => r.json());
+      document.getElementById('statHistory').textContent = data.count ?? 0;
+      const body = document.getElementById('historyBody');
+      const history = data.history || [];
+      if (!history.length) {
+        body.innerHTML = '<tr><td colspan="5">Chưa có lượt điểm danh.</td></tr>';
+        return;
+      }
+      body.innerHTML = history.map(item => `
+        <tr>
+          <td>${formatDate(item.checkin_time)}</td>
+          <td>${item.name}</td>
+          <td><code>${item.face_id}</code></td>
+          <td>${item.user_id || '-'}</td>
+          <td><code>${item.record_id}</code></td>
+        </tr>`).join('');
+    }
+
+    async function deleteFace(faceId, name) {
+      if (!confirm(`Xóa khuôn mặt "${name}" (${faceId})?`)) return;
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/attendance/face/${encodeURIComponent(faceId)}`, { method: 'DELETE' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || data.message || `HTTP ${response.status}`);
+        setResult('facesResult', data.message || 'Đã xóa', true);
+        await refreshHealth();
+      } catch (error) {
+        setResult('facesResult', `Lỗi: ${error.message}`, false);
+      }
+    }
+
+    document.querySelectorAll('.tab').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(item => item.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(panel => panel.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.panel).classList.add('active');
+    }));
+
+    bindPreview('enrollFile', 'enrollPreview', (base64) => { currentImageBase64 = base64; });
+    bindPreview('testFile', 'testPreview', (base64) => { testImageBase64 = base64; });
+
+    document.getElementById('btnDetect').addEventListener('click', async () => {
+      if (!currentImageBase64) return setResult('enrollResult', 'Chọn ảnh trước.', false);
+      try {
+        setResult('enrollResult', 'Đang phát hiện khuôn mặt... (lần đầu có thể tải model, chờ 30-60s)');
+        const data = await postJson('/api/attendance/face/detect', { image_base64: currentImageBase64 });
+        setResult('enrollResult', `Phát hiện ${data.count} khuôn mặt\n${JSON.stringify(data.faces, null, 2)}`, data.count === 1);
+      } catch (error) {
+        setResult('enrollResult', `Lỗi: ${error.message}`, false);
+      }
+    });
+
+    document.getElementById('btnEnroll').addEventListener('click', async () => {
+      const name = document.getElementById('enrollName').value.trim();
+      const userId = document.getElementById('enrollUserId').value.trim();
+      if (!name) return setResult('enrollResult', 'Nhập họ tên.', false);
+      if (!currentImageBase64) return setResult('enrollResult', 'Chọn ảnh trước.', false);
+      try {
+        setResult('enrollResult', 'Đang đăng ký... (lần đầu có thể tải model, chờ 30-60s)');
+        const body = { name, image_base64: currentImageBase64 };
+        if (userId) body.user_id = userId;
+        const data = await postJson('/api/attendance/face/enroll', body);
+        setResult('enrollResult', `${data.message}\nface_id: ${data.face_id}`, true);
+        await refreshHealth();
+      } catch (error) {
+        setResult('enrollResult', `Lỗi: ${error.message}`, false);
+      }
+    });
+
+    document.getElementById('btnRecognize').addEventListener('click', async () => {
+      if (!testImageBase64) return setResult('testResult', 'Chọn ảnh trước.', false);
+      try {
+        setResult('testResult', 'Đang nhận diện...');
+        const data = await postJson('/api/attendance/face/recognize', { image_base64: testImageBase64 });
+        const text = data.recognized
+          ? `Nhận ra: ${data.name}\nĐộ tin cậy: ${data.confidence ?? '-'}\n${data.message}`
+          : `Không nhận ra\n${data.message}`;
+        setResult('testResult', text, data.recognized);
+        if (data.recognized) await refreshHistory();
+      } catch (error) {
+        setResult('testResult', `Lỗi: ${error.message}`, false);
+      }
+    });
+
+    document.getElementById('refreshFaces').addEventListener('click', refreshHealth);
+    document.getElementById('refreshHistory').addEventListener('click', refreshHistory);
+
+    refreshHealth();
+  </script>
+</body>
+</html>

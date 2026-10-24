@@ -1,0 +1,1063 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RobotUTH — Operator Console</title>
+  <script src="/static/web/auth.js"></script>
+  <style>
+    :root {
+      --bg: #e9f6f6; --panel: #ffffff; --panel-2: #f4fafa; --line: #d5e7e8; --line-2: #c2dcdd;
+      --text: #1e293b; --muted: #64748b; --faint: #94a3b8;
+      --accent: #008689; --accent-2: #006d70; --ok: #16a34a; --warn: #f59e0b;
+      --danger: #da1c2d; --danger-2: #b9182a; --mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+      --sans: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+      --r: 14px;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+    button { font: inherit; border: 0; cursor: pointer; color: var(--text); }
+    button:disabled { cursor: not-allowed; opacity: .38; }
+    input { font: inherit; color: var(--text); }
+
+    /* ── app bar ── */
+    #bar { display: flex; align-items: center; gap: 14px; padding: 12px 20px;
+           background: var(--accent); color: #fff; border-bottom: 3px solid var(--danger);
+           position: sticky; top: 0; z-index: 5; }
+    #bar .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; }
+    #bar .logo .mark { width: 28px; height: 28px; border-radius: 8px; flex: 0 0 auto;
+      background: #fff; color: var(--accent); display: grid; place-items: center;
+      font-size: 15px; font-weight: 800; }
+    #bar .sub { color: rgba(255,255,255,.75); font-size: 12px; margin-top: 1px; }
+    .pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px;
+            border-radius: 999px; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.25);
+            font-size: 12px; color: rgba(255,255,255,.85); white-space: nowrap; }
+    .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,.5); flex: 0 0 auto; }
+    .pill.ok { color: #d9fbe6; border-color: #46d37e66; } .pill.ok .dot { background: #4ade80; }
+    .pill.bad { color: #ffd9dd; border-color: #ff8b9666; } .pill.bad .dot { background: #ff8b96; }
+    .pill.warn { color: #fee9c7; } .pill.warn .dot { background: #fbbf24; }
+    #bar .spacer { flex: 1; }
+
+    /* ── layout ── */
+    #grid { display: grid; grid-template-columns: 330px 1fr; gap: 16px;
+            padding: 16px 20px; max-width: 1280px; margin: 0 auto; }
+    @media (max-width: 980px) { #grid { grid-template-columns: 1fr; } }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r);
+            padding: 16px; box-shadow: 0 1px 3px rgba(0, 134, 137, .08); }
+    .card h2 { margin: 0 0 12px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase;
+               color: var(--accent); font-weight: 700; }
+    .stack { display: grid; gap: 16px; align-content: start; }
+
+    /* ── connection row ── */
+    #connCard .row { display: flex; gap: 8px; }
+    input.field { background: var(--panel-2); border: 1px solid var(--line-2); border-radius: 9px;
+                  padding: 9px 11px; min-width: 0; }
+    input.field:focus { outline: none; border-color: var(--accent); }
+    #wsBase { flex: 1; font-family: var(--mono); font-size: 12px; }
+    #robotId { width: 90px; font-family: var(--mono); }
+    .btn { border-radius: 9px; padding: 9px 14px; background: var(--panel-2);
+           border: 1px solid var(--line-2); font-weight: 600; }
+    .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover:not(:disabled) { background: var(--accent-2); border-color: var(--accent-2); }
+    .btn.block { width: 100%; }
+
+    /* ── drive pad ── */
+    #pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 4px; }
+    .dir { height: 58px; border-radius: 12px; background: var(--panel-2);
+           border: 1px solid var(--line-2); display: grid; place-items: center;
+           touch-action: none; user-select: none; }
+    .dir svg { width: 22px; height: 22px; fill: var(--accent); }
+    .dir:hover:not(:disabled) { border-color: var(--accent); }
+    .dir.held { background: var(--accent); border-color: var(--accent); }
+    .dir.held svg { fill: #fff; }
+    #stopBtn { grid-column: 1 / -1; height: 54px; border-radius: 12px;
+               background: linear-gradient(180deg, var(--danger), var(--danger-2));
+               border: 1px solid #8f111f; color: #fff; font-weight: 800; font-size: 16px;
+               letter-spacing: .18em; box-shadow: 0 6px 18px -8px #da1c2d99; }
+    #stopBtn:hover:not(:disabled) { filter: brightness(1.08); }
+
+    /* ── speed ── */
+    #speedRow { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+    #speedRow label { font-size: 12px; color: var(--muted); }
+    #speed { flex: 1; appearance: none; height: 6px; border-radius: 3px;
+             background: linear-gradient(90deg, var(--accent) var(--fill, 60%), var(--line-2) var(--fill, 60%)); }
+    #speed::-webkit-slider-thumb { appearance: none; width: 18px; height: 18px; border-radius: 50%;
+             background: var(--accent); border: 3px solid #fff; box-shadow: 0 0 0 1px var(--accent); }
+    #speedVal { font-family: var(--mono); font-size: 13px; color: var(--text); min-width: 74px; text-align: right; }
+    .clampNote { font-size: 11px; color: var(--faint); margin-top: 6px; }
+
+    /* ── nav card ── */
+    #navCard .row { display: flex; gap: 8px; }
+    #place { flex: 1; }
+    .hint { font-size: 11px; color: var(--faint); margin-top: 8px; }
+
+    /* ── maps card ── */
+    #mapsCard .row { display: flex; gap: 8px; flex-wrap: wrap; }
+    #mapName { flex: 1; }
+    .btn.danger { color: var(--danger); border-color: #f3b6bd; }
+    .btn.danger:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+    .expBadge { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px;
+                font-size: 9px; letter-spacing: .06em; text-transform: none;
+                background: #fff4d6; color: #92600a; border: 1px solid #ecd28f; }
+    #addPlaceBtn.armed, #tapDriveBtn.armed { background: #fff4d6; border-color: #ecd28f; color: #92600a; }
+    #placeTable { font-family: var(--mono); font-size: 11px; }
+    #placeTable table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+    #placeTable td { padding: 3px 4px; border-top: 1px solid var(--line); }
+    #placeTable td.nm { color: var(--text); }
+    #placeTable td.xy { color: var(--muted); }
+    #placeTable button { border: none; background: none; color: var(--danger); cursor: pointer;
+                         font-size: 11px; padding: 2px 6px; }
+
+    /* ── map card ── */
+    #mapCard { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+    #mapTop { display: flex; align-items: center; gap: 10px; padding: 0 4px; }
+    #mapTop h2 { margin: 0; flex: 1; }
+    #mapWrap { position: relative; background: #0b1420; border: 1px solid var(--line-2);
+               border-radius: 10px; overflow: hidden; }
+    #mapCanvas { display: block; cursor: grab; touch-action: none; width: 100%; height: auto; }
+    #mapCanvas.panning { cursor: grabbing; }
+    #mapHud { position: absolute; top: 10px; left: 10px; display: flex; gap: 8px; flex-wrap: wrap;
+              pointer-events: none; }
+    .chip { background: rgba(8, 16, 28, .82); border: 1px solid #22344d; border-radius: 8px;
+            padding: 5px 10px; font: 12px var(--mono); color: #b8cfe2; backdrop-filter: blur(3px); }
+    .chip b { color: #fff; font-weight: 600; }
+    .chip.target { color: #7dd3fc; }
+    #gaugeWrap { position: absolute; left: 10px; bottom: 10px; width: 190px; pointer-events: none; }
+    #clearLabel { font: 10px var(--mono); letter-spacing: .08em; text-transform: uppercase;
+                  color: #7e97ad; margin-bottom: 4px; text-shadow: 0 1px 2px #000; }
+    #clearBar { height: 8px; background: #17273a; border-radius: 4px; overflow: hidden;
+                border: 1px solid #22344d; }
+    #clearFill { height: 100%; width: 0%; background: var(--ok); transition: width .2s, background .2s; }
+    .mapTools { position: absolute; top: 10px; right: 10px; display: flex; flex-direction: column; gap: 6px; }
+    .mapTools button { width: 34px; height: 32px; border-radius: 8px; font-size: 15px;
+                       background: rgba(13, 24, 40, .9); border: 1px solid #22344d; color: #b8cfe2; }
+    .mapTools button:hover { border-color: var(--faint); }
+    .mapTools button.on { background: #00afaf; color: #04201d; border-color: #00afaf; }
+    #legend { display: flex; gap: 14px; flex-wrap: wrap; padding: 0 4px; font-size: 11.5px; color: var(--muted); }
+    #legend .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+    /* ── events ── */
+    #logCard { grid-column: 1 / -1; padding: 12px 16px 14px; }
+    #logCard h2 { margin: 4px 0 8px; }
+    #log { height: 150px; overflow-y: auto; background: var(--panel-2); border: 1px solid var(--line);
+           border-radius: 10px; padding: 8px 10px; font: 12px var(--mono); }
+    #log div { padding: 1.5px 0; color: #52657a; white-space: pre-wrap; }
+    #log .ok { color: var(--ok); } #log .bad { color: var(--danger); } #log .muted { color: var(--faint); }
+    #log::-webkit-scrollbar { width: 8px; } #log::-webkit-scrollbar-thumb { background: var(--line-2); border-radius: 4px; }
+
+    #foot { max-width: 1280px; margin: 0 auto; padding: 0 20px 22px; color: var(--faint);
+            font-size: 11.5px; display: flex; gap: 14px; flex-wrap: wrap; }
+    a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+<header id="bar">
+    <div class="logo">
+      <div class="mark">R</div>
+      <div>
+        <div>RobotUTH <span style="color:rgba(255,255,255,.75);font-weight:400">Operator Console</span></div>
+        <div class="sub">Remote drive · one controller per robot · dead-man watchdog 0.5 s</div>
+      </div>
+    </div>
+  <div class="spacer"></div>
+  <span class="pill" id="connPill"><span class="dot"></span><span id="connState">server: disconnected</span></span>
+  <span class="pill" id="robotPill"><span class="dot"></span><span id="robotState">robot: offline</span></span>
+  <span class="pill" id="leasePill"><span class="dot"></span><span id="leaseState">viewer</span></span>
+</header>
+
+<main id="grid">
+  <div class="stack">
+    <section class="card" id="connCard">
+      <h2>Connection</h2>
+      <div class="row">
+        <input class="field" id="wsBase" spellcheck="false">
+        <input class="field" id="robotId" value="orion-OS-R-SG04-f3de" spellcheck="false">
+      </div>
+      <div style="height:10px"></div>
+      <button id="connectBtn" class="btn primary block">Connect</button>
+    </section>
+
+    <section class="card">
+      <h2>Manual drive</h2>
+      <div id="pad">
+        <span></span>
+        <button class="dir" data-dir="forward" title="Forward (W / ↑)"><svg viewBox="0 0 24 24"><path d="M12 4l8 10h-5v6h-6v-6H4z"/></svg></button>
+        <span></span>
+        <button class="dir" data-dir="left" title="Turn left (A / ←)"><svg viewBox="0 0 24 24"><path d="M4 12l10-8v5h6v6h-6v5z"/></svg></button>
+        <span></span>
+        <button class="dir" data-dir="right" title="Turn right (D / →)"><svg viewBox="0 0 24 24"><path d="M20 12l-10 8v-5H4v-6h6V4z"/></svg></button>
+        <span></span>
+        <button class="dir" data-dir="backward" title="Backward (S / ↓)"><svg viewBox="0 0 24 24"><path d="M12 20L4 10h5V4h6v6h5z"/></svg></button>
+        <span></span>
+        <button id="stopBtn" title="Emergency stop (Space)">STOP</button>
+      </div>
+      <div id="speedRow">
+        <label>Speed</label>
+        <input id="speed" type="range" min="0.1" max="1.2" step="0.1" value="0.3">
+        <span id="speedVal">0.30 m/s</span>
+      </div>
+      <div class="clampNote" id="speedNote">Hold to drive · release to stop · range set by the robot's advertised speed limits (turns scale proportionally to the angular range)</div>
+    </section>
+
+    <section class="card" id="navCard">
+      <h2>Navigate</h2>
+      <div class="row">
+        <input class="field" id="place" value="PhongDaoTao" list="placeList" spellcheck="false">
+        <datalist id="placeList"></datalist>
+      </div>
+      <div style="height:10px"></div>
+      <div class="row">
+        <button id="navBtn" class="btn primary" style="flex:1" disabled>Navigate</button>
+        <button id="stopNavBtn" class="btn" disabled>Stop nav</button>
+      </div>
+      <div style="height:10px"></div>
+      <div class="row">
+        <button id="tapDriveBtn" class="btn" style="flex:1" disabled>Tap-drive (click map)</button>
+      </div>
+      <div class="hint">Named places come from the robot's saved map · Tap-drive: arm, then double-click a map coordinate.</div>
+    </section>
+
+    <section class="card" id="mapsCard">
+      <h2>Maps <span class="expBadge" title="Place add/delete is experimental until validated on the robot">place CRUD: experimental</span></h2>
+      <div class="row">
+        <input class="field" id="mapName" list="mapList" placeholder="map name" spellcheck="false">
+        <datalist id="mapList"></datalist>
+        <button id="mapsRefreshBtn" class="btn" title="Reload maps + current">⟳</button>
+      </div>
+      <div style="height:8px"></div>
+      <div class="row">
+        <button id="mapSwitchBtn" class="btn" disabled>Switch</button>
+        <button id="mapRemoveBtn" class="btn danger" disabled>Remove</button>
+        <button id="mapCreateBtn" class="btn primary">Start scan</button>
+        <button id="mapStopBtn" class="btn" disabled>Stop &amp; save</button>
+      </div>
+      <div style="height:10px"></div>
+      <div class="row">
+        <button id="addPlaceBtn" class="btn" disabled>+ Add place (click map)</button>
+        <button id="placeListBtn" class="btn" disabled>Places ⟳</button>
+      </div>
+      <div id="placeTable" class="hint">No places loaded.</div>
+      <div class="hint" id="mapsHint">Scan: start → drive the robot around the area → stop &amp; save under a name.</div>
+    </section>
+  </div>
+
+  <section class="card" id="mapCard">
+    <div id="mapTop">
+      <h2>Live map</h2>
+      <button id="takeBtn" class="btn primary">Take control</button>
+      <button id="releaseBtn" class="btn">Release</button>
+    </div>
+    <div id="mapWrap">
+      <canvas id="mapCanvas" width="860" height="560"></canvas>
+    <div id="mapHud">
+      <span class="chip" id="hudPose">—</span>
+      <span class="chip" id="hudSpeed"></span>
+      <span class="chip" id="hudBattery" hidden></span>
+      <span class="chip target" id="hudTarget" hidden></span>
+    </div>
+      <div class="mapTools">
+        <button id="zoomIn" title="Zoom in">+</button>
+        <button id="zoomOut" title="Zoom out">−</button>
+        <button id="followBtn" class="on" title="Center on robot">◎</button>
+        <button id="resetBtn" title="Reset view">⤾</button>
+      </div>
+      <div id="gaugeWrap">
+        <div id="clearLabel">Front clearance</div>
+        <div id="clearBar"><div id="clearFill"></div></div>
+      </div>
+    </div>
+    <div id="legend">
+      <span><span class="sw" style="background:#22c55e"></span>robot</span>
+      <span><span class="sw" style="background:#e8b53c"></span>lidar return</span>
+      <span><span class="sw" style="background:#ef4444"></span>danger zone &lt; 0.35 m</span>
+      <span><span class="sw" style="background:#3b82f6"></span>place</span>
+      <span><span class="sw" style="background:#94a3b8"></span>trail</span>
+      <span>scroll = zoom · drag = pan · double-click = coordinates</span>
+    </div>
+  </section>
+
+  <section class="card" id="logCard">
+    <h2>Events</h2>
+    <div id="log"></div>
+  </section>
+</main>
+
+<footer id="foot">
+  <span><a href="/static/index.html">← Admin home</a></span>
+  <span>Safety: robot-side watchdog 0.5 s · STOP on release/blur/tab-hide · chassis single-owner</span>
+  <span>DynamicStoppingPolicy zone 0.35 m — a red gauge is final, do not retry</span>
+</footer>
+
+<script>
+// Operator console per the remote-control spec: pointer/keyboard manual control with a
+// 10 Hz movement-refresh timer, immediate STOP on release/blur/hide, one controller per
+// robot enforced server-side (we render it), and a live top-down map fed by robot
+// telemetry (pose, lidar points, front clearance, places).
+const $ = id => document.getElementById(id);
+const logBox = $('log');
+function log(msg, cls = '') {
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  line.textContent = new Date().toLocaleTimeString() + '  ' + msg;
+  logBox.prepend(line);
+  while (logBox.childElementCount > 200) logBox.lastChild.remove();
+}
+$('wsBase').value = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+
+let ws = null, controller = false, robotOnline = false;
+let activeDir = null, refreshTimer = null;
+const pending = new Map();
+let readiness = { core_service: 'unknown', localization: 'unknown' };
+
+function send(obj) {
+  if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+}
+
+// Speed limits advertised by the robot (register/hello `speed_limits`); fall back to the
+// Orion SDK NavigationAdvancedBean range baked into the slider's HTML attributes.
+let speedLimits = { linear_min: 0.1, linear_max: 1.2, angular_min: 0.2, angular_max: 1.8 };
+
+function refreshSpeed() {
+  const v = parseFloat($('speed').value) || speedLimits.linear_min;
+  return Math.min(speedLimits.linear_max, Math.max(speedLimits.linear_min, v));
+}
+
+// Reconfigure the slider from the robot's real capability so it never offers a speed the
+// robot would clamp away. Keeps the current value if it still fits, else snaps to default.
+function applySpeedLimits(l) {
+  if (!l || typeof l.linear_max !== 'number') return;
+  speedLimits = {
+    linear_min: l.linear_min ?? 0.1, linear_max: l.linear_max ?? 1.2,
+    angular_min: l.angular_min ?? 0.2, angular_max: l.angular_max ?? 1.8,
+  };
+  const el = $('speed');
+  el.min = String(speedLimits.linear_min);
+  el.max = String(speedLimits.linear_max);
+  el.step = String(Math.max(0.05, +(speedLimits.linear_max / 12).toFixed(2)));
+  const cur = parseFloat(el.value);
+  if (!(cur >= speedLimits.linear_min && cur <= speedLimits.linear_max))
+    el.value = String(l.default_linear ?? speedLimits.linear_min);
+  $('speedNote').textContent =
+    `Hold to drive · release to stop · ${speedLimits.linear_min}–${speedLimits.linear_max} m/s ` +
+    `(robot max; turns scale to ${speedLimits.angular_max} rad/s)`;
+  paintSlider();
+}
+
+function paintSlider() {
+  const el = $('speed');
+  const pct = (el.value - el.min) / (el.max - el.min) * 100;
+  el.style.setProperty('--fill', pct + '%');
+  $('speedVal').textContent = parseFloat(el.value).toFixed(2) + ' m/s';
+}
+$('speed').addEventListener('input', paintSlider);
+$('speed').addEventListener('change', e => e.target.blur());  // don't trap W/A/S/D
+paintSlider();
+
+function pill(id, state, text) {
+  const p = $(id);
+  p.classList.remove('ok', 'bad', 'warn');
+  if (state) p.classList.add(state);
+  p.querySelector('span:last-child').textContent = text;
+}
+
+function setControls() {
+  const linkOk = ws && ws.readyState === 1 && robotOnline;
+  const coreReady = readiness.core_service === 'connected';
+  const localized = readiness.localization === 'localized';
+  const canDrive = controller && linkOk && coreReady;
+  const canNavigate = canDrive && localized && !mapping;
+  for (const b of document.querySelectorAll('.dir')) b.disabled = !canDrive;
+  $('stopBtn').disabled = !linkOk;
+  $('navBtn').disabled = !canNavigate;
+  $('stopNavBtn').disabled = !(linkOk && controller && coreReady);
+  $('takeBtn').disabled = !(ws && ws.readyState === 1 && robotOnline && !controller);
+  $('releaseBtn').disabled = !controller;
+  // Map manager: reads need the link; all CoreService mutations need control.
+  $('mapsRefreshBtn').disabled = !linkOk;
+  $('placeListBtn').disabled = !linkOk;
+  $('mapSwitchBtn').disabled = !(linkOk && controller && coreReady && !mapping);
+  $('mapRemoveBtn').disabled = !(linkOk && controller && coreReady && !mapping);
+  $('mapCreateBtn').disabled = !(linkOk && controller && coreReady && !mapping);
+  $('mapStopBtn').disabled = !(linkOk && controller && coreReady && mapping);
+  $('addPlaceBtn').disabled = !(linkOk && controller && coreReady && !mapping);
+  $('tapDriveBtn').disabled = !canNavigate;
+  if (controller) pill('leasePill', 'ok', 'control: YOU');
+  else if (robotOnline) pill('leasePill', '', 'control: viewer');
+  else pill('leasePill', '', 'control: —');
+}
+
+function setDir(dir) {
+  if (dir === activeDir) return;
+  activeDir = dir;
+  for (const b of document.querySelectorAll('.dir')) b.classList.toggle('held', b.dataset.dir === dir);
+  if (refreshTimer) { clearInterval(refreshTimer); refreshTimer = null; }
+  if (dir) {
+    const issue = () => {
+      const commandId = String(Date.now() % 100000);
+      pending.set(commandId, Date.now());
+      if (pending.size > 30) pending.delete(pending.keys().next().value);
+      send({ type: 'move', direction: dir, speed: refreshSpeed(),
+             command_id: commandId, client_sent_at: Date.now() });
+    };
+    issue();
+    refreshTimer = setInterval(issue, 100);   // 10 Hz movement refresh (spec)
+  } else {
+    send({ type: 'stop' });
+  }
+}
+
+// Manual motion must die on release, tab hide, or window blur (spec) — the robot-side
+// watchdog is the backstop, not the primary stop.
+document.querySelectorAll('.dir').forEach(b => {
+  b.addEventListener('pointerdown', e => { e.preventDefault(); setDir(b.dataset.dir); });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave'])
+    b.addEventListener(ev, () => { if (activeDir === b.dataset.dir) setDir(null); });
+});
+$('stopBtn').addEventListener('click', () => { setDir(null); send({ type: 'stop' }); });
+window.addEventListener('blur', () => setDir(null));
+document.addEventListener('visibilitychange', () => { if (document.hidden) setDir(null); });
+window.addEventListener('beforeunload', () => { setDir(null); });
+
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT') return;
+  if (e.repeat) return;
+  const map = { w: 'forward', ArrowUp: 'forward', s: 'backward', ArrowDown: 'backward',
+                a: 'left', ArrowLeft: 'left', d: 'right', ArrowRight: 'right' };
+  const dir = map[e.key];
+  if (dir && controller && robotOnline) { e.preventDefault(); setDir(dir); }
+  if (e.key === ' ') { e.preventDefault(); setDir(null); send({ type: 'stop' }); }
+});
+document.addEventListener('keyup', e => {
+  const map = { w: 'forward', ArrowUp: 'forward', s: 'backward', ArrowDown: 'backward',
+                a: 'left', ArrowLeft: 'left', d: 'right', ArrowRight: 'right' };
+  if (map[e.key] && map[e.key] === activeDir) setDir(null);
+});
+
+$('takeBtn').addEventListener('click', () => send({ type: 'take_control' }));
+$('releaseBtn').addEventListener('click', () => send({ type: 'release_control' }));
+$('navBtn').addEventListener('click', () => {
+  const commandId = `nav-${Date.now()}`;
+  pending.set(commandId, Date.now());
+  send({ type: 'navigate', destination: $('place').value.trim(), command_id: commandId });
+});
+$('stopNavBtn').addEventListener('click', () =>
+  send({ type: 'stop_navigation', command_id: `navstop-${Date.now()}` }));
+
+// ── Map manager: maps + places CRUD over the robot link ─────────────────────
+// Read queries work as viewer; mutations require control (server enforces lease).
+let mapping = false;
+
+function sendMap(type, extra = {}) {
+  const commandId = `map-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  pending.set(commandId, Date.now());
+  send(Object.assign({ type, name: $('mapName').value.trim(), command_id: commandId }, extra));
+}
+$('mapsRefreshBtn').addEventListener('click', refreshMaps);
+function refreshMaps() {
+  if (!ws || ws.readyState !== 1) return;
+  sendMap('map_list');
+  sendMap('current_map');
+  sendMap('place_list');
+}
+$('mapSwitchBtn').addEventListener('click', () => {
+  const n = $('mapName').value.trim();
+  if (!n) return;
+  if (!confirm(`Switch map to "${n}"? The robot re-locates on the new map.`)) return;
+  sendMap('map_switch');
+});
+$('mapRemoveBtn').addEventListener('click', () => {
+  const n = $('mapName').value.trim();
+  if (!n) return;
+  if (prompt(`Type the map name to REMOVE "${n}" permanently:`) !== n) return;
+  sendMap('map_remove');
+});
+$('mapCreateBtn').addEventListener('click', () => {
+  const n = $('mapName').value.trim();
+  if (!n) { log('enter a map name first', 'bad'); return; }
+  if (!confirm(`Start scanning map "${n}"? Drive the robot around the area, then Stop & save.`)) return;
+  sendMap('map_start_create');
+});
+$('mapStopBtn').addEventListener('click', () => sendMap('map_stop_create'));
+$('placeListBtn').addEventListener('click', () => sendMap('place_list'));
+
+// Add-place mode: arm, then the next map click supplies the coordinates.
+let addPlaceArmed = false;
+$('addPlaceBtn').addEventListener('click', () => {
+  if (!controller) { log('take control to add places', 'bad'); return; }
+  addPlaceArmed = !addPlaceArmed;
+  $('addPlaceBtn').classList.toggle('armed', addPlaceArmed);
+  $('addPlaceBtn').textContent = addPlaceArmed ? 'Click the map…' : '+ Add place (click map)';
+});
+
+// Tap-drive mode: arm, then the next map double-click sends drive_to(x, y).
+let tapDriveArmed = false;
+$('tapDriveBtn').addEventListener('click', () => {
+  if (!controller) { log('take control to tap-drive', 'bad'); return; }
+  tapDriveArmed = !tapDriveArmed;
+  $('tapDriveBtn').classList.toggle('armed', tapDriveArmed);
+  $('tapDriveBtn').textContent = tapDriveArmed ? 'Double-click the map…' : 'Tap-drive (click map)';
+});
+function disarmTapDrive() {
+  if (tapDriveArmed) {
+    tapDriveArmed = false;
+    $('tapDriveBtn').classList.remove('armed');
+    $('tapDriveBtn').textContent = 'Tap-drive (click map)';
+  }
+}
+window.addEventListener('blur', disarmTapDrive);
+
+function handleMapStatus(msg) {
+  const ok = msg.result === 'ok' || msg.result === 'accepted';
+  const suffix = msg.rc == null ? '' : ` · rc=${msg.rc}${msg.vendor_symbol ? ` (${msg.vendor_symbol})` : ''}`;
+  log(`map ${msg.op}: ${msg.detail || msg.state || msg.result}${suffix}`, ok ? 'ok' : 'bad');
+  if (msg.state) mapping = ['starting', 'active', 'saving'].includes(msg.state);
+  else if (msg.op === 'map_start_create') mapping = ok;
+  else if (msg.op === 'map_stop_create') mapping = false;
+  if (ok && (msg.op === 'map_stop_create' || msg.op === 'map_switch')) {
+    send({ type: 'place_list' });
+  }
+  if (ok && (msg.op === 'place_add' || msg.op === 'place_delete')) {
+    send({ type: 'place_list' });
+  }
+}
+
+function handleMapList(msg) {
+  mapping = !!msg.mapping;
+  const dl = $('mapList');
+  dl.innerHTML = '';
+  (msg.maps || []).forEach(n => {
+    const o = document.createElement('option'); o.value = n; dl.appendChild(o);
+  });
+  if (msg.current) $('mapName').value = msg.current;
+  log(`maps: ${(msg.maps || []).join(', ') || '(none)'} · current: ${msg.current || '—'}`);
+}
+
+function handleCurrentMap(msg) {
+  mapping = !!msg.mapping;
+  if (msg.map) $('mapName').value = msg.map;
+  log(`current map: ${msg.map || '—'}${mapping ? ' (scanning)' : ''}`);
+  if (msg.map) loadFloorPlan(msg.map);
+}
+
+function renderPlaceTable() {
+  const box = $('placeTable');
+  const names = Object.keys(places).filter(n => places[n].fromRobot);
+  if (!names.length) {
+    box.textContent = 'No robot places loaded — press Places ⟳.';
+    return;
+  }
+  let html = '<table>';
+  for (const n of names.sort()) {
+    const p = places[n];
+    html += `<tr><td class="nm">${n}</td><td class="xy">${p.x.toFixed(2)}, ${p.y.toFixed(2)}</td>` +
+      `<td><button data-del="${n}" title="delete place">✕</button></td></tr>`;
+  }
+  box.innerHTML = html + '</table>';
+  box.querySelectorAll('button[data-del]').forEach(b => b.addEventListener('click', () => {
+    const n = b.dataset.del;
+    if (!confirm(`Delete place "${n}" from the robot? (experimental)`)) return;
+    send({ type: 'place_delete', name: n });
+  }));
+}
+
+$('connectBtn').addEventListener('click', () => {
+  if (ws) { ws.close(); ws = null; }
+  let url = `${$('wsBase').value.replace(/\/$/, '')}/operator/${encodeURIComponent($('robotId').value)}`;
+  // WS bypasses auth.js's fetch patch — attach the token the same way the
+  // server's WS handler expects it (query param).
+  const tok = localStorage.getItem('robot_token');
+  if (tok) url += '?token=' + encodeURIComponent(tok);
+  log('connecting ' + url.replace(/token=[^&]+/, 'token=…'));
+  ws = new WebSocket(url);
+  ws.onopen = () => { pill('connPill', 'ok', 'server: connected'); };
+  ws.onclose = () => {
+    pill('connPill', 'bad', 'server: disconnected');
+    robotOnline = false; controller = false; setControls(); setRobotState(false);
+  };
+  ws.onerror = () => log('websocket error', 'bad');
+  ws.onmessage = ev => handle(JSON.parse(ev.data));
+});
+
+function applyReadiness(value) {
+  if (!value) return;
+  readiness = Object.assign(readiness, value);
+  const core = readiness.core_service || 'unknown';
+  const localization = readiness.localization || 'unknown';
+  if (core !== 'connected') log(`CoreService: ${core}${readiness.detail ? ` — ${readiness.detail}` : ''}`, 'bad');
+  if (localization !== 'localized') $('hudPose').innerHTML = `<b>pose</b> ${localization}`;
+  setControls();
+}
+
+function errorRemedy(msg) {
+  if (msg.code === 'not_localized') return 'Open the Orion map app and localize the robot.';
+  if (msg.code === 'core_service_disconnected' || msg.code === 'core_service_unavailable')
+    return 'CoreService is unavailable; wait for robot services or restart RobotUTH.';
+  if (msg.code === 'chassis_busy') return 'Stop the current manual/navigation action first.';
+  if (msg.rc === -7) return 'RobotOS could not stop/take the action; check localization, active navigation and the clear front sector.';
+  return '';
+}
+
+function setRobotState(moving) {
+  if (!robotOnline) pill('robotPill', 'bad', 'robot: offline');
+  else if (moving) pill('robotPill', 'warn', 'robot: MOVING');
+  else pill('robotPill', 'ok', 'robot: online');
+}
+
+function handle(msg) {
+  switch (msg.type) {
+    case 'hello':
+      robotOnline = msg.robot_online;
+      log(`hello operator_id=${msg.operator_id} robot_online=${robotOnline}`);
+      if (msg.speed_limits) applySpeedLimits(msg.speed_limits);
+      if (msg.readiness) applyReadiness(msg.readiness);
+      setRobotState(false);   // pill must reflect hello too: an unlocalized
+                              // robot sends no position, so nothing else updates it
+      if (robotOnline) refreshMaps();   // viewer-allowed reads; populates the Maps card
+      break;
+    case 'control_granted':
+      controller = true; log('control granted', 'ok'); break;
+    case 'control_released':
+      controller = false; log('control released'); break;
+    case 'ack': {
+      const id = String(msg.command_id || msg.of || '');
+      const t0 = pending.get(id);
+      if (t0) { log(`ack ${msg.operation || id} (rtt ${Date.now() - t0} ms)`); pending.delete(id); }
+      if (msg.readiness) applyReadiness(msg.readiness);
+      break;
+    }
+    case 'position':
+      robotOnline = true;
+      setRobotState(Math.abs(msg.v || 0) > 0.01 || Math.abs(msg.w || 0) > 0.01);
+      onPose(msg);
+      break;
+    case 'navigation_status':
+      log('navigation: ' + (msg.state || msg.data || ''), 'ok');
+      if (msg.state === 'started') markNavTarget(msg.destination);
+      else if (/^(completed|failed|cancelled)(:|$)/.test(msg.state || '')) markNavTarget(null);
+      break;
+    case 'stopped':
+      log(`robot stopped (${msg.reason || 'command'})`);
+      setRobotState(false);      // instant feedback; idle telemetry is only 1 Hz
+      markNavTarget(null);       // sim clears nav on stop without a status event
+      break;
+    case 'error': {
+      if (msg.readiness) applyReadiness(msg.readiness);
+      const id = String(msg.command_id || '');
+      if (id) pending.delete(id);
+      const rc = msg.rc == null ? '' : ` · rc=${msg.rc}${msg.vendor_symbol ? ` (${msg.vendor_symbol})` : ''}`;
+      const remedy = errorRemedy(msg);
+      log(`error ${msg.code}${msg.operation ? ` [${msg.operation}]` : ''}: ${msg.detail || ''}${rc}${remedy ? ` — ${remedy}` : ''}`, 'bad');
+      break;
+    }
+    case 'register_ack': {
+      log(`robot ${msg.robot_id} registered`);
+      // robot-provided state (sim + Android with statusProvider): render it
+      // before any polling round-trips
+      if (msg.map) { $('mapName').value = msg.map; loadFloorPlan(msg.map); }
+      if (msg.places) robotPlacesFromRobot(msg);
+      if (msg.battery) setBattery(msg.battery);
+      if (msg.speed_limits) applySpeedLimits(msg.speed_limits);
+      if (msg.readiness) applyReadiness(msg.readiness);
+      break;
+    }
+    case 'status':
+      if (msg.battery) setBattery(msg.battery);
+      if (msg.readiness) applyReadiness(msg.readiness);
+      break;
+    case 'pose_status':
+      log(`pose: ${msg.state || msg.data || '?'} — localize the robot in the vendor app`, 'bad');
+      $('hudPose').innerHTML = '<b>pose</b> unlocalized';
+      break;
+    case 'map_operation_status':
+      handleMapStatus(msg); break;
+    case 'map_list':
+      handleMapList(msg); break;
+    case 'current_map':
+      handleCurrentMap(msg); break;
+    case 'place_list':
+      robotPlacesFromRobot(msg); break;
+    default:
+      log(JSON.stringify(msg).slice(0, 120));
+  }
+  setControls();
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// Map — top-down live view: world→screen transform with zoom + pan + follow,
+// robot trail, saved places, lidar returns, danger disc, clearance gauge.
+// ══════════════════════════════════════════════════════════════════════════
+const canvas = $('mapCanvas');
+const ctx = canvas.getContext('2d');
+const W = canvas.width, H = canvas.height;
+const DANGER_M = 0.35;                      // mirrors DynamicStoppingPolicy zone
+
+const view = { cx: 0, cy: 0, mpp: 0.02 };   // metres-per-pixel; follow on = center robot
+let follow = true;
+let pose = null;                            // last {x,y,theta,v,clearance_m,danger}
+let trail = [];                             // past poses (thinned)
+let points = [];                            // lidar returns [{x,y}]
+let places = {};                            // name -> {x,y,theta}
+let navTarget = null;                       // name while navigating
+
+const toScreen = (x, y) => [W / 2 + (x - view.cx) / view.mpp,
+                            H / 2 - (y - view.cy) / view.mpp];
+const toWorld = (px, py) => [view.cx + (px - W / 2) * view.mpp,
+                             view.cy - (py - H / 2) * view.mpp];
+
+// ── floor-plan underlay (real robot map.pgm, binary P5) ─────────────────────
+// Transform config — no resolution/origin metadata ships in the robot's map
+// files, so these constants calibrate the overlay against known places.
+// res: metres per pixel (Orion default 0.05); originX/Y: world metres of the
+// PGM's TOP-LEFT pixel; the image extends toward -y in world space.
+// One entry per map the robot actually uses; key = the map name the robot
+// reports in `current_map`. `map.pgm` is the OLD lic-1003174251 scan — kept so
+// switching back still renders a floor plan.
+const FLOOR_PLANS = {
+  'lic2-0908172305': {
+    url: '/static/web/robotmap/map-lic2-0908172305.pgm',
+    res: 0.05, originX: -9.0, originY: 6.8,
+  },
+  'lic-1003174251': {
+    url: '/static/web/robotmap/map.pgm',
+    res: 0.05, originX: -9.0, originY: 9.5,
+  },
+};
+let floorPlan = null;        // {canvas, w, h}
+let floorPlanKey = null;     // which FLOOR_PLANS entry is loaded
+let FLOOR_PLAN = FLOOR_PLANS['lic2-0908172305'];
+
+/** Load the underlay for `mapName`; reloads when the robot switches maps. */
+function loadFloorPlan(mapName) {
+  const key = mapName || 'lic2-0908172305';
+  const cfg = FLOOR_PLANS[key];
+  if (!cfg) { log(`no floor plan for map '${key}'`, 'muted'); return; }
+  if (key === floorPlanKey) return;          // already showing this map
+  floorPlanKey = key;
+  FLOOR_PLAN = cfg;
+  floorPlan = null;
+  fetch(FLOOR_PLAN.url)
+    .then(r => r.ok ? r.arrayBuffer() : Promise.reject(r.status))
+    .then(buf => {
+      const b = new Uint8Array(buf);
+      let i = 0;
+      const tok = () => {
+        while (b[i] === 32 || b[i] === 10 || b[i] === 13 || b[i] === 9) i++;
+        const s = i;
+        while (i < b.length && b[i] > 32) i++;
+        return String.fromCharCode(...b.slice(s, i));
+      };
+      if (tok() !== 'P5') throw new Error('not P5');
+      const w = +tok(), h = +tok(); tok();  // maxval
+      i++;                                   // single whitespace before pixels
+      if (!w || !h || i + w * h > b.length) throw new Error('bad pgm');
+      const off = document.createElement('canvas');
+      off.width = w; off.height = h;
+      const octx = off.getContext('2d');
+      const img = octx.createImageData(w, h);
+      for (let p = 0; p < w * h; p++) {
+        const v = b[i + p];
+        const o = p * 4;
+        if (v < 100) {          // occupied → steel blue wall
+          img.data[o] = 71; img.data[o + 1] = 128; img.data[o + 2] = 180; img.data[o + 3] = 235;
+        } else if (v >= 200) {  // free → barely lighter than the canvas bg
+          img.data[o] = 17; img.data[o + 1] = 30; img.data[o + 2] = 46; img.data[o + 3] = 160;
+        }                       // unknown (gray) → transparent
+      }
+      octx.putImageData(img, 0, 0);
+      floorPlan = { canvas: off, w, h };
+      log(`floor plan loaded (${w}×${h}px @ ${FLOOR_PLAN.res} m/px)`, 'muted');
+      draw();
+    })
+    .catch(e => log(`floor plan unavailable (${e})`, 'muted'));
+}
+
+function onPose(msg) {
+  const p = { x: msg.x, y: msg.y, theta: msg.theta, v: msg.v || 0,
+              clearance: msg.clearance_m, danger: !!msg.danger };
+  if (!pose || Math.hypot(p.x - pose.x, p.y - pose.y) > 0.02) {
+    trail.push(p);
+    if (trail.length > 600) trail.shift();
+  }
+  pose = p;
+  if (msg.points) points = msg.points;
+  if (follow) { view.cx = p.x; view.cy = p.y; }
+  const deg = ((p.theta * 180 / Math.PI) % 360 + 360) % 360;
+  $('hudPose').innerHTML = `<b>x</b> ${p.x.toFixed(2)} &nbsp;<b>y</b> ${p.y.toFixed(2)} &nbsp;<b>θ</b> ${deg.toFixed(0)}°`;
+  $('hudSpeed').innerHTML = `<b>v</b> ${Math.abs(p.v).toFixed(2)} m/s`;
+  setClearGauge(p.clearance);
+  draw();
+}
+
+function setClearGauge(c) {
+  const bar = $('clearFill');
+  if (c == null) { bar.style.width = '0%'; return; }
+  const d = Math.max(c, 0);
+  const pct = Math.min(100, (d / 1.5) * 100);       // full bar = 1.5 m clearance
+  bar.style.width = pct + '%';
+  bar.style.background = c <= DANGER_M ? '#ef4444' : c < DANGER_M * 2 ? '#f59e0b' : '#22c55e';
+}
+
+function addPlace(name, x, y, theta = null, fromRobot = false) {
+  places[name] = { x, y, theta, fromRobot };
+  refreshPlaceList();
+}
+function robotPlacesFromRobot(msg) {
+  // A real place list replaces every robot-sourced place; client-side sim seeds
+  // stay. Accepts both shapes: place_list's [{name,x,y,theta}] and the
+  // register_ack passthrough {name: [x, y, theta]}.
+  for (const n of Object.keys(places)) if (places[n].fromRobot) delete places[n];
+  if (Array.isArray(msg.places)) {
+    msg.places.forEach(p => addPlace(p.name, p.x, p.y, p.theta ?? 0, true));
+  } else {
+    for (const [name, xyz] of Object.entries(msg.places || {}))
+      addPlace(name, xyz[0], xyz[1], xyz[2] ?? 0, true);
+  }
+  renderPlaceTable();
+  const count = Array.isArray(msg.places) ? msg.places.length : Object.keys(msg.places || {}).length;
+  log(`place list: ${count} places on ${msg.map || '—'}`);
+}
+function setBattery(b) {
+  const chip = $('hudBattery');
+  if (!b || typeof b.level !== 'number') { chip.hidden = true; return; }
+  chip.hidden = false;
+  chip.innerHTML = `<b>🔋</b> ${b.level}%${b.charging ? ' ⚡' : ''}`;
+  chip.style.color = b.level <= 20 && !b.charging ? '#ef4444' : '';
+}
+function refreshPlaceList() {
+  const dl = $('placeList');
+  dl.innerHTML = '';
+  for (const name of Object.keys(places)) {
+    const o = document.createElement('option'); o.value = name; dl.appendChild(o);
+  }
+}
+function markNavTarget(name) {
+  navTarget = name;
+  const chip = $('hudTarget');
+  chip.hidden = !name;
+  if (name) chip.textContent = '→ ' + name;
+}
+
+function draw() {
+  ctx.fillStyle = '#0b1420';
+  ctx.fillRect(0, 0, W, H);
+
+  // real floor plan underlay (robot map.pgm), below the grid
+  if (floorPlan) {
+    const [sx, sy] = toScreen(FLOOR_PLAN.originX, FLOOR_PLAN.originY);
+    ctx.imageSmoothingEnabled = false;
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(floorPlan.canvas, sx, sy,
+                  floorPlan.w * FLOOR_PLAN.res / view.mpp,
+                  floorPlan.h * FLOOR_PLAN.res / view.mpp);
+    ctx.globalAlpha = 1;
+  }
+
+  // metre grid: 0.5m minor when zoomed in, 1m otherwise; axis labels every 2m
+  const minor = view.mpp < 0.012 ? 0.5 : 1;
+  drawGrid(minor, '#12202f');
+  drawGrid(minor * 2, '#1a3049', true);
+
+  // trail (fading tail)
+  if (trail.length > 1) {
+    ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(148,163,184,.5)';
+    ctx.beginPath();
+    for (let i = 0; i < trail.length; i++) {
+      const [sx, sy] = toScreen(trail[i].x, trail[i].y);
+      i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
+    }
+    ctx.stroke();
+  }
+
+  // places
+  ctx.font = '11px ui-monospace, monospace';
+  for (const [name, pl] of Object.entries(places)) {
+    const [sx, sy] = toScreen(pl.x, pl.y);
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath(); ctx.arc(sx, sy, 6, 0, 7); ctx.fill();
+    if (name === navTarget) {
+      ctx.strokeStyle = '#7dd3fc'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(sx, sy, 11, 0, 7); ctx.stroke();
+    }
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText(name, sx + 9, sy + 4);
+  }
+
+  // lidar returns
+  ctx.fillStyle = '#e8b53c';
+  for (const [x, y] of points) {
+    const [sx, sy] = toScreen(x, y);
+    if (sx >= -4 && sx <= W + 4 && sy >= -4 && sy <= H + 4) {
+      ctx.beginPath(); ctx.arc(sx, sy, 2.2, 0, 7); ctx.fill();
+    }
+  }
+
+  // danger disc + robot
+  if (pose) {
+    const [rx, ry] = toScreen(pose.x, pose.y);
+    if (pose.clearance != null && pose.clearance < DANGER_M * 3) {
+      ctx.fillStyle = pose.danger ? 'rgba(239,68,68,.26)' : 'rgba(245,158,11,.15)';
+      ctx.beginPath(); ctx.arc(rx, ry, DANGER_M / view.mpp, 0, 7); ctx.fill();
+    }
+    // FOV wedge (front sector the lidar/policy watch)
+    const fov = 0.5, r = 1.2 / view.mpp;
+    ctx.fillStyle = 'rgba(34,197,94,.07)';
+    ctx.beginPath(); ctx.moveTo(rx, ry);
+    ctx.arc(rx, ry, r, -pose.theta - fov, -pose.theta + fov);
+    ctx.closePath(); ctx.fill();
+
+    drawRobot(rx, ry, pose.theta);
+  }
+}
+
+function drawGrid(step, color, labels) {
+  ctx.strokeStyle = color; ctx.lineWidth = 1;
+  const [wx0, wy1] = toWorld(0, 0);
+  const [wx1, wy0] = toWorld(W, H);
+  const startX = Math.ceil(wx0 / step) * step, startY = Math.ceil(wy0 / step) * step;
+  ctx.beginPath();
+  for (let x = startX; x <= wx1; x += step) {
+    const [sx] = toScreen(x, 0); ctx.moveTo(sx, 0); ctx.lineTo(sx, H);
+  }
+  for (let y = startY; y <= wy1; y += step) {
+    const [, sy] = toScreen(0, y); ctx.moveTo(0, sy); ctx.lineTo(W, sy);
+  }
+  ctx.stroke();
+  if (labels) {
+    ctx.fillStyle = '#31465e'; ctx.font = '10px ui-monospace, monospace';
+    for (let x = startX; x <= wx1; x += step) {
+      const [sx, sy] = toScreen(x, 0);
+      if (sy < 14) continue;
+      ctx.fillText(x.toFixed(0), sx + 3, H - 5);
+    }
+    for (let y = startY; y <= wy1; y += step) {
+      const [sx, sy] = toScreen(0, y);
+      if (sx > W - 30) continue;
+      ctx.fillText(y.toFixed(0), 4, sy - 3);
+    }
+  }
+}
+
+function drawRobot(rx, ry, theta) {
+  ctx.save();
+  ctx.translate(rx, ry); ctx.rotate(-theta);
+  // chassis
+  ctx.fillStyle = '#22c55e';
+  ctx.strokeStyle = '#0b1420'; ctx.lineWidth = 2;
+  roundRect(-11, -9, 22, 18, 4); ctx.fill(); ctx.stroke();
+  // heading nose
+  ctx.fillStyle = '#fff';
+  ctx.beginPath(); ctx.moveTo(12, 0); ctx.lineTo(5, -5); ctx.lineTo(5, 5);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+}
+
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
+// ── zoom / pan / follow controls ────────────────────────────────────────────
+// Canvas is CSS-scaled (width:100%), so pointer offsets must be converted from
+// CSS px to internal canvas px or zoom anchor / pan / dblclick coords skew.
+const canvasXY = e => {
+  const r = canvas.getBoundingClientRect();
+  return [(e.clientX - r.left) * W / r.width,
+          (e.clientY - r.top) * H / r.height];
+};
+function zoomAt(factor, px, py) {
+  const [wx, wy] = toWorld(px ?? W / 2, py ?? H / 2);
+  view.mpp = Math.min(0.2, Math.max(0.002, view.mpp * factor));
+  if (!follow) {
+    const [nx, ny] = toWorld(px ?? W / 2, py ?? H / 2);
+    view.cx += wx - nx; view.cy += wy - ny;
+  }
+  if (pose && follow) { view.cx = pose.x; view.cy = pose.y; }
+  draw();
+}
+$('zoomIn').addEventListener('click', () => zoomAt(0.8));
+$('zoomOut').addEventListener('click', () => zoomAt(1.25));
+canvas.addEventListener('wheel', e => { e.preventDefault(); zoomAt(e.deltaY > 0 ? 1.15 : 0.87, ...canvasXY(e)); }, { passive: false });
+
+$('followBtn').addEventListener('click', () => {
+  follow = !follow;
+  $('followBtn').classList.toggle('on', follow);
+  if (follow && pose) { view.cx = pose.x; view.cy = pose.y; }
+  draw();
+});
+$('resetBtn').addEventListener('click', () => {
+  follow = false; $('followBtn').classList.remove('on');
+  view.cx = pose ? pose.x : 0; view.cy = pose ? pose.y : 0; view.mpp = 0.02;
+  draw();
+});
+
+// drag to pan (auto-unfollows)
+let drag = null;
+canvas.addEventListener('pointerdown', e => {
+  const [px, py] = canvasXY(e);
+  drag = { sx: px, sy: py, cx: view.cx, cy: view.cy };
+  canvas.classList.add('panning');
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const [px, py] = canvasXY(e);
+  if (follow) { follow = false; $('followBtn').classList.remove('on'); }
+  view.cx = drag.cx - (px - drag.sx) * view.mpp;
+  view.cy = drag.cy + (py - drag.sy) * view.mpp;
+  draw();
+});
+for (const ev of ['pointerup', 'pointercancel'])
+  canvas.addEventListener(ev, () => { drag = null; canvas.classList.remove('panning'); });
+
+// double-click = add-place coordinates when armed, drive-to when tap-drive is
+// armed, otherwise a coordinate hint
+canvas.addEventListener('dblclick', e => {
+  const [wx, wy] = toWorld(...canvasXY(e));
+  if (addPlaceArmed) {
+    addPlaceArmed = false;
+    $('addPlaceBtn').classList.remove('armed');
+    $('addPlaceBtn').textContent = '+ Add place (click map)';
+    const name = prompt(`Place name at (${wx.toFixed(2)}, ${wy.toFixed(2)}):`);
+    if (name && name.trim()) {
+      send({ type: 'place_add', name: name.trim(), x: +wx.toFixed(3), y: +wy.toFixed(3),
+             theta: pose ? pose.theta : 0 });
+    }
+    return;
+  }
+  if (tapDriveArmed) {
+    tapDriveArmed = false;
+    $('tapDriveBtn').classList.remove('armed');
+    $('tapDriveBtn').textContent = 'Tap-drive (click map)';
+    send({ type: 'drive_to', x: +wx.toFixed(3), y: +wy.toFixed(3),
+           theta: pose ? pose.theta : 0 });
+    log(`drive_to (${wx.toFixed(2)}, ${wy.toFixed(2)})`, 'ok');
+    return;
+  }
+  log(`map click @ (${wx.toFixed(2)}, ${wy.toFixed(2)}) — arm "+ Add place" to save here`, 'muted');
+});
+
+// seed the known simulator places so the list + map are never empty
+// (client-side seeds; a real `place_list` from the robot replaces robot-sourced ones)
+addPlace('PhongDaoTao', 2.0, 1.0);
+addPlace('SinhVien', 0.0, 0.0);
+addPlace('BanLamViec', 1.9, 0.9);
+// Seeds from the OLD lic-1003174251 scan; a real `place_list` replaces them on
+// connect, so these only fill the table until the robot answers.
+addPlace('Điểm nạp tiền', 0.509, -0.012, 0.71, true);
+addPlace('Cọc sạc', 0.195, -0.283, 0.71, true);
+addPlace('Điểm tiếp nhận', 0.696, 0.843, 0.71, true);
+renderPlaceTable();
+loadFloorPlan();
+setControls();
+setRobotState(false);
+draw();
+</script>
+</body>
+</html>

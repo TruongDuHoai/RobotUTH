@@ -1,0 +1,70 @@
+{"id": "t01", "wav": "t01.wav", "ref": "Xin chào, tôi là trợ lý ảo của trường Đại học Giao thông Vận tải.", "intent": "tts_generated", "keyterms": ["giao thông vận tải"]}
+{"id": "t02", "wav": "t02.wav", "ref": "Bạn cần tôi hỗ trợ điều gì?", "intent": "tts_generated", "keyterms": []}
+{"id": "t03", "wav": "t03.wav", "ref": "Trường Đại học Giao thông Vận tải Thành phố Hồ Chí Minh.", "intent": "tts_generated", "keyterms": ["giao thông vận tải"]}
+{"id": "t04", "wav": "t04.wav", "ref": "Phòng Đào tạo nằm ở tầng hai của tòa nhà A.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "t05", "wav": "t05.wav", "ref": "Xin vui lòng chờ trong giây lát.", "intent": "tts_generated", "keyterms": []}
+{"id": "t06", "wav": "t06.wav", "ref": "Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi.", "intent": "tts_generated", "keyterms": []}
+{"id": "t07", "wav": "t07.wav", "ref": "Khoa Cơ khí Động lực ở đâu vậy?", "intent": "tts_generated", "keyterms": ["cơ khí"]}
+{"id": "t08", "wav": "t08.wav", "ref": "Làm ơn chỉ tôi đường đến thư viện.", "intent": "tts_generated", "keyterms": ["thư viện"]}
+{"id": "t09", "wav": "t09.wav", "ref": "Thư viện mở cửa từ bảy giờ sáng đến mười giờ tối.", "intent": "tts_generated", "keyterms": ["thư viện"]}
+{"id": "t10", "wav": "t10.wav", "ref": "Tôi muốn hỏi về lịch học kỳ hai.", "intent": "tts_generated", "keyterms": []}
+{"id": "t11", "wav": "t11.wav", "ref": "Xin hỏi phòng ba trăm linh năm ở đâu?", "intent": "tts_generated", "keyterms": []}
+{"id": "t12", "wav": "t12.wav", "ref": "Khuôn viên trường có bãi đỗ xe máy không?", "intent": "tts_generated", "keyterms": []}
+{"id": "t13", "wav": "t13.wav", "ref": "Xin chào thầy cô và các bạn sinh viên.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "t14", "wav": "t14.wav", "ref": "Đăng ký học phần được thực hiện trên cổng thông tin sinh viên.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "t15", "wav": "t15.wav", "ref": "Tôi cần tra cứu điểm học tập của mình.", "intent": "tts_generated", "keyterms": []}
+{"id": "t16", "wav": "t16.wav", "ref": "Nhà ăn tập thể nằm cạnh ký túc xá.", "intent": "tts_generated", "keyterms": ["ký túc xá"]}
+{"id": "t17", "wav": "t17.wav", "ref": "Làm thế nào để đăng ký phòng thực hành?", "intent": "tts_generated", "keyterms": []}
+{"id": "t18", "wav": "t18.wav", "ref": "Bạn có thể nói lại được không?", "intent": "tts_generated", "keyterms": []}
+{"id": "t19", "wav": "t19.wav", "ref": "Xin lỗi, tôi chưa hiểu ý bạn.", "intent": "tts_generated", "keyterms": []}
+{"id": "t20", "wav": "t20.wav", "ref": "Chúc bạn một ngày làm việc hiệu quả.", "intent": "tts_generated", "keyterms": []}
+{"id": "t21", "wav": "t21.wav", "ref": "Trung tâm Ngoại ngữ tổ chức lớp tiếng Anh vào buổi tối.", "intent": "tts_generated", "keyterms": ["ngoại ngữ"]}
+{"id": "t22", "wav": "t22.wav", "ref": "Hội trường A có sức chứa ba trăm chỗ ngồi.", "intent": "tts_generated", "keyterms": ["hội trường"]}
+{"id": "t23", "wav": "t23.wav", "ref": "Vui lòng xuất trình thẻ sinh viên khi vào phòng thi.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "t24", "wav": "t24.wav", "ref": "Lịch thi kết thúc học kỳ được dán trên bảng thông báo.", "intent": "tts_generated", "keyterms": []}
+{"id": "t25", "wav": "t25.wav", "ref": "Tôi muốn gặp giáo viên hướng dẫn của mình.", "intent": "tts_generated", "keyterms": []}
+{"id": "t26", "wav": "t26.wav", "ref": "Phòng Công tác Sinh viên mở cửa vào giờ hành chính.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "t27", "wav": "t27.wav", "ref": "Đường đến Ký túc xá đi thẳng rồi rẽ trái.", "intent": "tts_generated", "keyterms": ["ký túc xá"]}
+{"id": "t28", "wav": "t28.wav", "ref": "Xin cảm ơn sự hợp tác của quý thầy cô.", "intent": "tts_generated", "keyterms": []}
+{"id": "t29", "wav": "t29.wav", "ref": "Máy tính ở phòng thực hành máy tính bị hỏng.", "intent": "tts_generated", "keyterms": []}
+{"id": "t30", "wav": "t30.wav", "ref": "Hãy đi theo tôi, tôi sẽ dẫn bạn đến đó.", "intent": "tts_generated", "keyterms": []}
+{"id": "x01", "wav": "x01.wav", "ref": "Khoa Kỹ thuật Xây dựng nằm ở dãy nhà C.", "intent": "tts_generated", "keyterms": ["xây dựng"]}
+{"id": "x02", "wav": "x02.wav", "ref": "Phòng 205 thuộc Khoa Cơ khí Động lực.", "intent": "tts_generated", "keyterms": ["cơ khí"]}
+{"id": "x03", "wav": "x03.wav", "ref": "Đăng ký môn học hạn chót là ngày mười lăm tháng chín.", "intent": "tts_generated", "keyterms": []}
+{"id": "x04", "wav": "x04.wav", "ref": "Học phí học kỳ này là năm triệu hai trăm nghìn đồng.", "intent": "tts_generated", "keyterms": []}
+{"id": "x05", "wav": "x05.wav", "ref": "Xin chào mừng tân sinh viên khóa hai nghìn không trăm hai mươi lăm.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "x06", "wav": "x06.wav", "ref": "Thư viện số hai tầng mở cửa đến mười một giờ đêm.", "intent": "tts_generated", "keyterms": ["thư viện"]}
+{"id": "x07", "wav": "x07.wav", "ref": "Số điện thoại phòng Đào tạo là không hai tám ba tám hai tư một tư.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "x08", "wav": "x08.wav", "ref": "Bạn hãy đến quầy thông tin ở sảnh tòa nhà A.", "intent": "tts_generated", "keyterms": []}
+{"id": "x09", "wav": "x09.wav", "ref": "Khoa Điện tử Viễn thông tuyển sinh ngành tự động hóa.", "intent": "tts_generated", "keyterms": []}
+{"id": "x10", "wav": "x10.wav", "ref": "Kết quả thi sẽ được công bố sau bảy ngày làm việc.", "intent": "tts_generated", "keyterms": []}
+{"id": "x11", "wav": "x11.wav", "ref": "Trạm xe buýt nội trường chạy mỗi mười lăm phút một chuyến.", "intent": "tts_generated", "keyterms": []}
+{"id": "x12", "wav": "x12.wav", "ref": "Nhà thi đa năng nằm gần sân bóng đá.", "intent": "tts_generated", "keyterms": []}
+{"id": "x13", "wav": "x13.wav", "ref": "Vui lòng quét mã QR để điểm danh.", "intent": "tts_generated", "keyterms": []}
+{"id": "x14", "wav": "x14.wav", "ref": "Giảng đường B có một trăm năm mươi chỗ ngồi.", "intent": "tts_generated", "keyterms": []}
+{"id": "x15", "wav": "x15.wav", "ref": "Khoa Kinh tế Vận tải đào tạo ngành logistics.", "intent": "tts_generated", "keyterms": ["đào tạo", "logistics"]}
+{"id": "x16", "wav": "x16.wav", "ref": "Bộ môn Cầu đường thuộc Khoa Kỹ thuật Xây dựng.", "intent": "tts_generated", "keyterms": ["xây dựng"]}
+{"id": "x17", "wav": "x17.wav", "ref": "Thời gian bảo vệ đồ án là ngày hai mươi tháng mười hai.", "intent": "tts_generated", "keyterms": []}
+{"id": "x18", "wav": "x18.wav", "ref": "Phòng y tế trường làm việc từ bảy giờ đến mười bảy giờ.", "intent": "tts_generated", "keyterms": []}
+{"id": "x19", "wav": "x19.wav", "ref": "Sinh viên cần mang theo thẻ khi vào phòng thực hành.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "x20", "wav": "x20.wav", "ref": "Khu vực để xe gửi xe máy ở tầng hầm tòa nhà A.", "intent": "tts_generated", "keyterms": []}
+{"id": "x21", "wav": "x21.wav", "ref": "Trung tâm Đào tạo Sau đại học ở tầng bốn nhà A.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "x22", "wav": "x22.wav", "ref": "Điểm trung bình tích lũy của bạn là ba phẩy hai tư.", "intent": "tts_generated", "keyterms": []}
+{"id": "x23", "wav": "x23.wav", "ref": "Lớp phần trăm thuộc Khoa Công nghệ Thông tin.", "intent": "tts_generated", "keyterms": []}
+{"id": "x24", "wav": "x24.wav", "ref": "Xe điện nội khu phục vụ miễn phí cho sinh viên.", "intent": "tts_generated", "keyterms": ["sinh viên"]}
+{"id": "x25", "wav": "x25.wav", "ref": "Phòng Truyền thông xin hình ảnh cho bản tin tuần.", "intent": "tts_generated", "keyterms": []}
+{"id": "x26", "wav": "x26.wav", "ref": "Hạn nộp luận văn tốt nghiệp là ngày ba mươi tháng sáu.", "intent": "tts_generated", "keyterms": []}
+{"id": "x27", "wav": "x27.wav", "ref": "Khoa Máy bố trí phòng thực hành ở tầng một.", "intent": "tts_generated", "keyterms": []}
+{"id": "x28", "wav": "x28.wav", "ref": "Cổng số hai mở cho người đi bộ từ sáu giờ sáng.", "intent": "tts_generated", "keyterms": []}
+{"id": "x29", "wav": "x29.wav", "ref": "Trung tâm Ngoại ngữ tổ chức thi đánh giá năng lực.", "intent": "tts_generated", "keyterms": ["ngoại ngữ"]}
+{"id": "x30", "wav": "x30.wav", "ref": "Học bổng khuyến khích học kỳ hai xét vào tháng mười một.", "intent": "tts_generated", "keyterms": []}
+{"id": "x31", "wav": "x31.wav", "ref": "Sân trước trường có tượng đài truyền thống.", "intent": "tts_generated", "keyterms": []}
+{"id": "x32", "wav": "x32.wav", "ref": "Phòng Quản lý Khoa học công nghệ nằm ở tầng ba.", "intent": "tts_generated", "keyterms": []}
+{"id": "x33", "wav": "x33.wav", "ref": "Bạn cần đặt lịch hẹn trước khi đến phòng một một chín.", "intent": "tts_generated", "keyterms": []}
+{"id": "x34", "wav": "x34.wav", "ref": "Ký túc xá thu phí điện nước theo hóa đơn hằng tháng.", "intent": "tts_generated", "keyterms": ["ký túc xá"]}
+{"id": "x35", "wav": "x35.wav", "ref": "Nhà ăn A phục vụ từ mười giờ đến mười ba giờ thirty.", "intent": "tts_generated", "keyterms": []}
+{"id": "x36", "wav": "x36.wav", "ref": "Ngành Kỹ thuật Giao thông đào tạo trong bốn năm.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "x37", "wav": "x37.wav", "ref": "Vui lòng không hút thuốc trong khuôn viên trường.", "intent": "tts_generated", "keyterms": []}
+{"id": "x38", "wav": "x38.wav", "ref": "Phòng Đào tạo sẽ cấp lại bảng điểm trong năm ngày.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "x39", "wav": "x39.wav", "ref": "Trường có ba cơ sở đào tạo tại Thành phố Hồ Chí Minh.", "intent": "tts_generated", "keyterms": ["đào tạo"]}
+{"id": "x40", "wav": "x40.wav", "ref": "Khoa Vận tải Kinh tế liên kết với nhiều doanh nghiệp logistics.", "intent": "tts_generated", "keyterms": ["logistics"]}

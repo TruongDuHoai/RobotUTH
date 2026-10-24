@@ -1,0 +1,1029 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Thiết kế chat RobotUTH cho màn hình robot 14 inch với bàn phím Telex luôn hiển thị">
+    <title>RobotUTH | Chat 14" + bàn phím Telex</title>
+    <style>
+        :root {
+            --ink: #102d30;
+            --ink-soft: #496365;
+            --muted: #718384;
+            --paper: #fbfcf8;
+            --canvas: #e8f0ec;
+            --line: #d7e3de;
+            --brand: #087f7c;
+            --brand-dark: #07585b;
+            --brand-pale: #d9efeb;
+            --lime: #b9d96c;
+            --coral: #f17d60;
+            --white: #ffffff;
+            --shadow: 0 22px 70px rgba(27, 66, 67, .12);
+            --round-xl: 28px;
+            --round-lg: 20px;
+            --round-md: 14px;
+        }
+
+        * { box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            margin: 0;
+            overflow: hidden;
+            color: var(--ink);
+            background: var(--canvas);
+            font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+        }
+        button, textarea { font: inherit; }
+        button { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+        .screen {
+            height: 100vh;
+            height: 100dvh;
+            padding: 14px;
+            display: grid;
+            gap: 14px;
+            grid-template-columns: 72px minmax(0, 1fr) 500px;
+            grid-template-rows: minmax(0, 1fr);
+            grid-template-areas: "rail chat kb";
+            background:
+                radial-gradient(circle at 7% 0%, rgba(255, 255, 255, .8), transparent 26%),
+                radial-gradient(circle at 96% 100%, rgba(185, 217, 108, .22), transparent 30%),
+                var(--canvas);
+        }
+
+        .rail, .chat, .kb-panel {
+            min-height: 0;
+            border: 1px solid rgba(255, 255, 255, .78);
+            box-shadow: var(--shadow);
+        }
+
+        .rail {
+            grid-area: rail;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 16px 10px;
+            border-radius: var(--round-xl);
+            background: var(--ink);
+            color: #d9efeb;
+        }
+        .rail-logo {
+            width: 46px;
+            height: 46px;
+            display: grid;
+            place-items: center;
+            border-radius: 15px;
+            background: var(--brand);
+            color: #fff;
+            font-size: 21px;
+            font-weight: 800;
+            letter-spacing: -.08em;
+        }
+        .rail-nav {
+            display: grid;
+            gap: 14px;
+            width: 100%;
+            margin-top: 42px;
+        }
+        .rail-button, .rail-link {
+            width: 54px;
+            height: 54px;
+            margin: auto;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 17px;
+            color: #9eb7b5;
+            background: transparent;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .rail-button:hover, .rail-link:hover,
+        .rail-button.active {
+            color: #fff;
+            background: #1d4b4d;
+        }
+        .rail-button.active { box-shadow: inset 0 -3px 0 var(--lime); }
+        .rail-button svg, .rail-link svg { width: 23px; height: 23px; }
+        .rail-bottom { margin-top: auto; display: grid; gap: 14px; }
+        .rail-help {
+            width: 42px;
+            height: 42px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            color: var(--ink);
+            background: var(--lime);
+            font-weight: 800;
+            cursor: pointer;
+            border: 0;
+        }
+
+        .chat {
+            grid-area: chat;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: var(--round-xl);
+            background: var(--paper);
+        }
+        .chat-head {
+            min-height: 84px;
+            padding: 15px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            border-bottom: 1px solid var(--line);
+            background: rgba(251, 252, 248, .92);
+        }
+        .chat-title { display: flex; align-items: center; gap: 13px; min-width: 0; }
+        .avatar {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 17px;
+            color: #fff;
+            background: var(--brand);
+            font-size: 19px;
+            font-weight: 800;
+        }
+        .avatar::after {
+            content: "";
+            position: absolute;
+            right: -2px;
+            bottom: -2px;
+            width: 13px;
+            height: 13px;
+            border: 3px solid var(--paper);
+            border-radius: 50%;
+            background: var(--lime);
+        }
+        .chat-title h2 { margin: 0; font-size: 18px; letter-spacing: -.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .chat-title p .dot { color: var(--brand); font-weight: 700; }
+        .head-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .head-button {
+            min-width: 48px;
+            height: 46px;
+            padding: 0 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: 1px solid var(--line);
+            border-radius: 13px;
+            color: var(--ink-soft);
+            background: var(--white);
+            cursor: pointer;
+        }
+        .head-button:hover { border-color: #8dc8bf; color: var(--brand-dark); }
+        .head-button svg { width: 18px; height: 18px; }
+        .head-button span { font-size: 13px; font-weight: 700; }
+
+        .messages {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            padding: 28px clamp(20px, 4vw, 56px) 22px;
+            background:
+                linear-gradient(90deg, rgba(232, 240, 236, .62) 1px, transparent 1px),
+                var(--paper);
+            background-size: 33.33% 100%;
+            scroll-behavior: smooth;
+        }
+        .day-divider {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            margin: 0 0 24px;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+        }
+        .day-divider::before, .day-divider::after { content: ""; height: 1px; flex: 1; background: var(--line); }
+        .message { display: flex; margin: 0 0 22px; animation: message-in .3s ease both; }
+        .message.user { justify-content: flex-end; }
+        @keyframes message-in { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+        .message-stack { max-width: min(720px, 78%); }
+        .bubble {
+            padding: 15px 18px;
+            border-radius: 19px;
+            font-size: 15.5px;
+            line-height: 1.58;
+            box-shadow: 0 4px 17px rgba(27, 66, 67, .06);
+            word-wrap: break-word;
+        }
+        .message.bot .bubble { border: 1px solid var(--line); border-bottom-left-radius: 5px; background: var(--white); }
+        .message.user .bubble { border-bottom-right-radius: 5px; color: #fff; background: var(--brand); }
+        .message-meta { display: flex; align-items: center; gap: 9px; margin-top: 7px; color: var(--muted); font-size: 11px; }
+        .message.user .message-meta { justify-content: flex-end; }
+        .source {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 8px;
+            border-radius: 7px;
+            color: var(--brand-dark);
+            background: var(--brand-pale);
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .typing {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin: 1px 0 19px;
+            padding: 14px 17px;
+            width: fit-content;
+            border: 1px solid var(--line);
+            border-radius: 17px;
+            background: var(--white);
+        }
+        .typing span {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #7da7a3;
+            animation: type-dot 1.2s infinite ease-in-out;
+        }
+        .typing span:nth-child(2) { animation-delay: .15s; }
+        .typing span:nth-child(3) { animation-delay: .3s; }
+        @keyframes type-dot { 0%, 80%, 100% { transform: translateY(0); opacity: .4; } 40% { transform: translateY(-4px); opacity: 1; } }
+
+        .chips-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 22px 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            background: var(--paper);
+        }
+        .chips-row::-webkit-scrollbar { display: none; }
+        .chips-label {
+            flex: 0 0 auto;
+            color: var(--muted);
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: .1em;
+            text-transform: uppercase;
+        }
+        .chip {
+            flex: 0 0 auto;
+            max-width: 240px;
+            padding: 9px 13px;
+            border: 1px solid var(--line);
+            border-radius: 999px;
+            color: var(--ink-soft);
+            background: var(--white);
+            font-size: 13px;
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .chip:hover { border-color: #8dc8bf; color: var(--brand-dark); background: #f2faf8; }
+        .chip:active { transform: scale(.97); }
+
+        .composer-wrap { padding: 12px clamp(20px, 4vw, 40px) 18px; background: var(--paper); }
+        .composer {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+            padding: 8px 8px 8px 16px;
+            border: 2px solid var(--line);
+            border-radius: 19px;
+            background: var(--white);
+            transition: border-color .2s, box-shadow .2s;
+        }
+        .composer:focus-within { border-color: #8dc8bf; box-shadow: 0 0 0 4px rgba(8, 127, 124, .08); }
+        .composer textarea {
+            flex: 1;
+            min-width: 0;
+            min-height: 44px;
+            max-height: 110px;
+            padding: 10px 0;
+            border: 0;
+            outline: 0;
+            color: var(--ink);
+            background: transparent;
+            resize: none;
+            font-size: 16px;
+            line-height: 1.45;
+        }
+        .composer textarea::placeholder { color: #91a4a1; }
+        .composer-actions { display: flex; align-items: center; gap: 7px; }
+        .round-action {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border: 0;
+            border-radius: 14px;
+            color: var(--brand-dark);
+            background: var(--brand-pale);
+            cursor: pointer;
+        }
+        .round-action:hover { background: #c3e5df; }
+        .round-action.recording { color: #fff; background: var(--coral); animation: record-pulse 1.3s infinite; }
+        @keyframes record-pulse { 50% { box-shadow: 0 0 0 7px rgba(241, 125, 96, .15); } }
+        .round-action.send { color: #fff; background: var(--brand); }
+        .round-action.send:disabled { cursor: not-allowed; opacity: .45; }
+        .round-action svg { width: 21px; height: 21px; }
+        .composer-hint {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 8px 4px 0;
+            color: var(--muted);
+            font-size: 11px;
+        }
+        .composer-hint kbd { padding: 2px 5px; border: 1px solid var(--line); border-radius: 4px; background: var(--white); }
+
+        .kb-panel {
+            grid-area: kb;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px 14px 13px;
+            border-radius: var(--round-xl);
+            background: var(--white);
+            overflow: hidden;
+        }
+        .kb-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 4px; }
+        .kb-title {
+            color: var(--ink-soft);
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: .08em;
+            text-transform: uppercase;
+        }
+        .kb-pill {
+            padding: 5px 10px;
+            border-radius: 999px;
+            color: var(--brand-dark);
+            background: var(--brand-pale);
+            font-size: 11px;
+            font-weight: 800;
+        }
+        .kb-layer { display: grid; gap: 7px; }
+        .kb-layer.hidden { display: none; }
+        .kb-row { display: flex; gap: 7px; }
+        .key {
+            flex: 1;
+            min-width: 0;
+            height: 58px;
+            display: grid;
+            place-items: center;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            color: var(--ink);
+            background: var(--paper);
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            transition: background .12s, color .12s, transform .06s;
+        }
+        .key:hover { background: #f0f7f4; }
+        .key:active { transform: scale(.94); }
+        .key.func {
+            background: #eef3f0;
+            color: var(--ink-soft);
+            font-size: 14px;
+        }
+        .key.func:hover { background: #e3ece8; }
+        .key.space { flex: 4; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+        .key.enter { flex: 2; color: #fff; background: var(--brand); font-size: 14px; }
+        .key.enter:hover { background: var(--brand-dark); }
+        .key.wide { flex: 1.4; }
+        .key.key-active { color: #fff; background: var(--brand); border-color: var(--brand); }
+        .kb-hint {
+            margin-top: auto;
+            padding: 8px 6px 0;
+            border-top: 1px solid var(--line);
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.5;
+            text-align: center;
+        }
+
+        .toast {
+            position: fixed;
+            right: 26px;
+            bottom: 25px;
+            z-index: 5;
+            max-width: min(360px, calc(100vw - 40px));
+            padding: 13px 17px;
+            border-radius: 12px;
+            color: #fff;
+            background: var(--ink);
+            box-shadow: var(--shadow);
+            font-size: 13px;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .2s, transform .2s;
+        }
+        .toast.show { transform: none; opacity: 1; }
+
+        @media (max-width: 1100px) {
+            .screen {
+                grid-template-columns: 60px minmax(0, 1fr);
+                grid-template-rows: minmax(0, 1fr) auto;
+                grid-template-areas: "rail chat" "kb kb";
+                padding: 10px;
+                gap: 10px;
+            }
+            .rail, .kb-panel { border-radius: var(--round-lg); }
+            .key { height: 48px; font-size: 16px; }
+            .messages { padding: 20px 18px 16px; background-size: 50% 100%; }
+            .message-stack { max-width: 86%; }
+            .bubble { padding: 13px 15px; font-size: 15px; }
+            .composer-wrap { padding: 10px 14px 14px; }
+            .composer-hint { display: none; }
+            .head-button span { display: none; }
+            .head-button { width: 46px; padding: 0; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="screen">
+        <nav class="rail" aria-label="Điều hướng chính">
+            <div class="rail-logo" aria-label="RobotUTH">r.</div>
+            <div class="rail-nav">
+                <button class="rail-button active" type="button" title="Tin nhắn" aria-label="Tin nhắn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 11.5a7.5 7.5 0 0 1-8 7.5 8.4 8.4 0 0 1-3.1-.6L4 20l1.5-4A7.4 7.4 0 0 1 4.5 12 7.5 7.5 0 0 1 12 4.5h.5A7.5 7.5 0 0 1 20 11.5Z"/><path d="M8 12h.01M12 12h.01M16 12h.01" stroke-linecap="round"/></svg>
+                </button>
+                <a class="rail-link" href="/static/web/attendance.html" title="Điểm danh" aria-label="Điểm danh">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 7V5a1 1 0 0 1 1-1h2M17 4h2a1 1 0 0 1 1 1v2M20 17v2a1 1 0 0 1-1 1h-2M7 20H5a1 1 0 0 1-1-1v-2"/><circle cx="12" cy="10" r="2.5"/><path d="M7.5 17a4.5 4.5 0 0 1 9 0"/></svg>
+                </a>
+                <a class="rail-link" href="https://vr.uth.edu.vn/" target="_blank" rel="noopener" title="Bản đồ" aria-label="Bản đồ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15M15 6v15"/></svg>
+                </a>
+            </div>
+            <div class="rail-bottom">
+                <a class="rail-link" href="/static/index.html" title="Trang chủ" aria-label="Trang chủ">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m3 11 9-8 9 8"/><path d="M5 10v10h14V10M9 20v-6h6v6"/></svg>
+                </a>
+                <button class="rail-help" id="helpButton" title="Trợ giúp">?</button>
+            </div>
+        </nav>
+
+        <main class="chat">
+            <header class="chat-head">
+                <div class="chat-title">
+                    <div class="avatar">R</div>
+                    <div>
+                        <h2>Nhắn tin với RobotUTH</h2>
+                        <p><span class="dot" id="statusDot">●</span> <span id="statusText">Trực tuyến</span> · Knowledge assistant</p>
+                    </div>
+                </div>
+                <div class="head-actions">
+                    <button class="head-button" id="newChatButton" type="button" title="Cuộc trò chuyện mới">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg><span>Cuộc trò chuyện mới</span>
+                    </button>
+                </div>
+            </header>
+
+            <section class="messages" id="messages" aria-live="polite">
+                <div class="day-divider">Hôm nay · 09:41</div>
+                <article class="message bot">
+                    <div class="message-stack">
+                        <div class="bubble">Xin chào! Tôi là RobotUTH, trợ lý ảo của Trường Đại học Giao thông vận tải TP.HCM. Bạn muốn tôi hỗ trợ điều gì?</div>
+                        <div class="message-meta"><span>RobotUTH</span><span>09:41</span><span class="source">Knowledge base</span></div>
+                    </div>
+                </article>
+                <article class="message user">
+                    <div class="message-stack">
+                        <div class="bubble">Giờ mở cửa thư viện là mấy giờ?</div>
+                        <div class="message-meta"><span>09:42</span><span>Đã gửi</span></div>
+                    </div>
+                </article>
+                <article class="message bot">
+                    <div class="message-stack">
+                        <div class="bubble">Thư viện mở cửa từ 7:30 đến 20:00, từ thứ Hai đến thứ Bảy. Chủ nhật thư viện nghỉ. Bạn có muốn tôi tìm vị trí thư viện trên bản đồ không?</div>
+                        <div class="message-meta"><span>RobotUTH</span><span>09:42</span><span class="source">Tài liệu thư viện</span></div>
+                    </div>
+                </article>
+            </section>
+
+            <div class="chips-row" id="chipsRow" aria-label="Câu hỏi gợi ý">
+                <span class="chips-label">Gợi ý</span>
+                <button class="chip" type="button" data-prompt="Giờ mở cửa thư viện là mấy giờ?">Giờ mở cửa thư viện?</button>
+                <button class="chip" type="button" data-prompt="Phòng B102 nằm ở đâu?">Phòng B102 ở đâu?</button>
+                <button class="chip" type="button" data-prompt="Thủ tục xin giấy xác nhận sinh viên?">Thủ tục giấy xác nhận SV</button>
+                <button class="chip" type="button" data-prompt="Học phí học kỳ này được tính như thế nào?">Cách tính học phí</button>
+                <button class="chip" type="button" data-prompt="Lịch học tuần này của tôi có gì?">Lịch học tuần này</button>
+            </div>
+
+            <div class="composer-wrap">
+                <form class="composer" id="composer">
+                    <textarea id="chatInput" rows="1" maxlength="500" placeholder="Viết tin nhắn cho RobotUTH..." aria-label="Nội dung tin nhắn" autocapitalize="off" autocorrect="off"></textarea>
+                    <div class="composer-actions">
+                        <button class="round-action" id="micButton" type="button" title="Nói với RobotUTH" aria-label="Nói với RobotUTH">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4M8 22h8"/></svg>
+                        </button>
+                        <button class="round-action send" id="sendButton" type="submit" title="Gửi tin nhắn" aria-label="Gửi tin nhắn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m22 2-7 20-4-9-9-4 20-7Z"/><path d="M22 2 11 13"/></svg>
+                        </button>
+                    </div>
+                </form>
+                <div class="composer-hint">
+                    <span>Bàn phím Telex tiếng Việt luôn hiển thị dưới màn hình.</span>
+                    <span><kbd>Enter</kbd> gửi · <kbd>Shift + Enter</kbd> xuống dòng</span>
+                </div>
+            </div>
+        </main>
+
+        <aside class="kb-panel" id="kbPanel" aria-label="Bàn phím ảo">
+            <div class="kb-head">
+                <span class="kb-title">Bàn phím ảo</span>
+                <span class="kb-pill">Telex · tiếng Việt</span>
+            </div>
+
+            <div class="kb-layer" id="layerLetters">
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="1">1</button>
+                    <button class="key" type="button" data-key="2">2</button>
+                    <button class="key" type="button" data-key="3">3</button>
+                    <button class="key" type="button" data-key="4">4</button>
+                    <button class="key" type="button" data-key="5">5</button>
+                    <button class="key" type="button" data-key="6">6</button>
+                    <button class="key" type="button" data-key="7">7</button>
+                    <button class="key" type="button" data-key="8">8</button>
+                    <button class="key" type="button" data-key="9">9</button>
+                    <button class="key" type="button" data-key="0">0</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="q">q</button>
+                    <button class="key" type="button" data-key="w">w</button>
+                    <button class="key" type="button" data-key="e">e</button>
+                    <button class="key" type="button" data-key="r">r</button>
+                    <button class="key" type="button" data-key="t">t</button>
+                    <button class="key" type="button" data-key="y">y</button>
+                    <button class="key" type="button" data-key="u">u</button>
+                    <button class="key" type="button" data-key="i">i</button>
+                    <button class="key" type="button" data-key="o">o</button>
+                    <button class="key" type="button" data-key="p">p</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="a">a</button>
+                    <button class="key" type="button" data-key="s">s</button>
+                    <button class="key" type="button" data-key="d">d</button>
+                    <button class="key" type="button" data-key="f">f</button>
+                    <button class="key" type="button" data-key="g">g</button>
+                    <button class="key" type="button" data-key="h">h</button>
+                    <button class="key" type="button" data-key="j">j</button>
+                    <button class="key" type="button" data-key="k">k</button>
+                    <button class="key" type="button" data-key="l">l</button>
+                    <button class="key" type="button" data-key="đ">đ</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key func wide" id="shiftKey" type="button" data-action="shift" aria-label="Viết hoa">⇧</button>
+                    <button class="key" type="button" data-key="z">z</button>
+                    <button class="key" type="button" data-key="x">x</button>
+                    <button class="key" type="button" data-key="c">c</button>
+                    <button class="key" type="button" data-key="v">v</button>
+                    <button class="key" type="button" data-key="b">b</button>
+                    <button class="key" type="button" data-key="n">n</button>
+                    <button class="key" type="button" data-key="m">m</button>
+                    <button class="key func wide" type="button" data-action="backspace" aria-label="Xoá">⌫</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key func" type="button" data-action="layer" data-layer="symbols">?123</button>
+                    <button class="key" type="button" data-key=",">,</button>
+                    <button class="key space" type="button" data-key=" ">Dấu cách</button>
+                    <button class="key" type="button" data-key=".">.</button>
+                    <button class="key enter" type="button" data-action="enter">↵ Gửi</button>
+                </div>
+            </div>
+
+            <div class="kb-layer hidden" id="layerSymbols">
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="1">1</button>
+                    <button class="key" type="button" data-key="2">2</button>
+                    <button class="key" type="button" data-key="3">3</button>
+                    <button class="key" type="button" data-key="4">4</button>
+                    <button class="key" type="button" data-key="5">5</button>
+                    <button class="key" type="button" data-key="6">6</button>
+                    <button class="key" type="button" data-key="7">7</button>
+                    <button class="key" type="button" data-key="8">8</button>
+                    <button class="key" type="button" data-key="9">9</button>
+                    <button class="key" type="button" data-key="0">0</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="@">@</button>
+                    <button class="key" type="button" data-key="#">#</button>
+                    <button class="key" type="button" data-key="$">$</button>
+                    <button class="key" type="button" data-key="%">%</button>
+                    <button class="key" type="button" data-key="&">&amp;</button>
+                    <button class="key" type="button" data-key="*">*</button>
+                    <button class="key" type="button" data-key="(">(</button>
+                    <button class="key" type="button" data-key=")">)</button>
+                    <button class="key" type="button" data-key="-">-</button>
+                    <button class="key" type="button" data-key="+">+</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key" type="button" data-key="=">=</button>
+                    <button class="key" type="button" data-key="_">_</button>
+                    <button class="key" type="button" data-key="/">/</button>
+                    <button class="key" type="button" data-key=":">:</button>
+                    <button class="key" type="button" data-key=";">;</button>
+                    <button class="key" type="button" data-key="&quot;">"</button>
+                    <button class="key" type="button" data-key="'">'</button>
+                    <button class="key" type="button" data-key="?">?</button>
+                    <button class="key" type="button" data-key="!">!</button>
+                    <button class="key" type="button" data-key=",">,</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key func wide" type="button" data-action="layer" data-layer="letters">ABC</button>
+                    <button class="key" type="button" data-key=".">.</button>
+                    <button class="key" type="button" data-key=":">:</button>
+                    <button class="key func wide" type="button" data-action="backspace" aria-label="Xoá">⌫</button>
+                </div>
+                <div class="kb-row">
+                    <button class="key func key-active" type="button" data-action="layer" data-layer="symbols">?123</button>
+                    <button class="key space" type="button" data-key=" ">Dấu cách</button>
+                    <button class="key enter" type="button" data-action="enter">↵ Gửi</button>
+                </div>
+            </div>
+
+            <div class="kb-hint">
+                Telex: aw→ă · aa→â · ee→ê · oo→ô · ow→ơ · uw→ư · dd→đ ·<br>
+                s/f/r/x/j = sắc · huyền · hỏi · ngã · nặng
+            </div>
+        </aside>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+
+    <script>
+        const IS_FILE_PREVIEW = window.location.protocol === 'file:';
+        const API_BASE_URL = IS_FILE_PREVIEW ? '' : window.location.origin;
+        const messages = document.getElementById('messages');
+        const input = document.getElementById('chatInput');
+        const sendButton = document.getElementById('sendButton');
+        const micButton = document.getElementById('micButton');
+        const newChatButton = document.getElementById('newChatButton');
+        const helpButton = document.getElementById('helpButton');
+        const kbPanel = document.getElementById('kbPanel');
+        const toast = document.getElementById('toast');
+        let isLoading = false;
+        let toastTimer;
+        const kbState = { shift: false, layer: 'letters' };
+
+        const TONE_MARKS = { s: '\u0301', f: '\u0300', r: '\u0309', x: '\u0303', j: '\u0323' };
+        const TONE_ORDER = ['\u0301', '\u0300', '\u0309', '\u0303', '\u0323'];
+        const VOWEL_TONES = {
+            a: 'áàảãạ', ă: 'ắằẳẵặ', â: 'ấầẩẫậ', e: 'éèẻẽẹ', ê: 'ếềểễệ',
+            i: 'íìỉĩị', o: 'óòỏõọ', ô: 'ốồổỗộ', ơ: 'ớờởỡợ',
+            u: 'úùủũụ', ư: 'ứừửữự', y: 'ýỳỷỹỵ'
+        };
+
+        function vowelInfo(ch) {
+            const lower = ch.toLowerCase();
+            for (const base in VOWEL_TONES) {
+                if (base === lower) return { base, tone: -1 };
+                const tone = VOWEL_TONES[base].indexOf(lower);
+                if (tone >= 0) return { base, tone };
+            }
+            return null;
+        }
+
+        function isToneable(ch) { return vowelInfo(ch) !== null; }
+        function isUpper(ch) { return ch === ch.toUpperCase() && ch !== ch.toLowerCase(); }
+
+        function applyTone(ch, toneKey) {
+            const info = vowelInfo(ch);
+            if (!info) return null;
+            const target = TONE_ORDER.indexOf(TONE_MARKS[toneKey]);
+            if (info.tone === target) {
+                return isUpper(ch) ? info.base.toUpperCase() : info.base;
+            }
+            const out = VOWEL_TONES[info.base][target];
+            return isUpper(ch) ? out.toUpperCase() : out;
+        }
+
+        function normalizeWord(word) {
+            return word.replace(/uơ/g, 'ươ').replace(/Uơ/g, 'Ươ');
+        }
+
+        function telexTransform(word) {
+            const last = word[word.length - 1];
+            const lc = last ? last.toLowerCase() : '';
+            if (lc === 'w') {
+                const before = word.slice(0, -1);
+                const c = before[before.length - 1];
+                const wMap = { a: 'ă', u: 'ư', o: 'ơ', A: 'Ă', U: 'Ư', O: 'Ơ' };
+                if (wMap[c]) return before.slice(0, -1) + wMap[c];
+            }
+            if (word.length >= 2) {
+                const pair = word.slice(-2).toLowerCase();
+                const dbl = { aa: 'â', ee: 'ê', oo: 'ô', ie: 'iê', ye: 'yê', dd: 'đ' };
+                if (dbl[pair]) {
+                    const ref = word[word.length - 2];
+                    const skipGI = pair === 'ie' && word[word.length - 3]?.toLowerCase() === 'g';
+                    if (!skipGI) return word.slice(0, -2) + (isUpper(ref) ? dbl[pair].toUpperCase() : dbl[pair]);
+                }
+            }
+            if (TONE_MARKS[lc]) {
+                const body = word.slice(0, -1);
+                const idxs = [];
+                for (let i = 0; i < body.length; i++) if (isToneable(body[i])) idxs.push(i);
+                if (!idxs.length) return null;
+                let pos = idxs[idxs.length - 1];
+                const L = body.length;
+                const lastBody = body[L - 1].toLowerCase();
+                const prevInfo = L >= 2 ? vowelInfo(body[L - 2]) : null;
+                const prevBase = prevInfo ? prevInfo.base : '';
+                const beforePrev = L >= 3 ? body[L - 3].toLowerCase() : '';
+                if ('uiy'.includes(lastBody) && idxs.length >= 2) {
+                    const prevToneIdx = idxs[idxs.length - 2];
+                    const prevTone = body[prevToneIdx].toLowerCase();
+                    const prevToneBefore = prevToneIdx > 0 ? body[prevToneIdx - 1].toLowerCase() : '';
+                    const isGlide = prevTone === 'u' && prevToneBefore === 'q';
+                    if (!isGlide) pos = prevToneIdx;
+                } else if (lastBody === 'o' && idxs.length >= 2 && 'ae'.includes(prevBase)) {
+                    pos = idxs[idxs.length - 2];
+                } else if (lastBody === 'a' && idxs.length >= 2 && 'uưi'.includes(prevBase)) {
+                    const isQua = prevBase === 'u' && beforePrev === 'q';
+                    const isGia = prevBase === 'i' && beforePrev === 'g';
+                    if (!isQua && !isGia) pos = idxs[idxs.length - 2];
+                }
+                const replaced = applyTone(body[pos], lc);
+                if (!replaced) return null;
+                return body.slice(0, pos) + replaced + body.slice(pos + 1);
+            }
+            return null;
+        }
+
+        function isWordChar(c) { return c ? /[\p{L}\p{M}\p{N}]/u.test(c) : false; }
+
+        function showToast(text) {
+            toast.textContent = text;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
+        }
+
+        function currentTime() {
+            return new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        function scrollToBottom() {
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function addMessage(text, isUser, meta = {}) {
+            const article = document.createElement('article');
+            article.className = `message ${isUser ? 'user' : 'bot'}`;
+            const stack = document.createElement('div');
+            stack.className = 'message-stack';
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = text;
+            const messageMeta = document.createElement('div');
+            messageMeta.className = 'message-meta';
+            const author = document.createElement('span');
+            author.textContent = isUser ? currentTime() : 'RobotUTH';
+            messageMeta.appendChild(author);
+            if (!isUser) {
+                const source = document.createElement('span');
+                source.className = 'source';
+                source.textContent = meta.source || 'Knowledge base';
+                messageMeta.appendChild(source);
+                const time = document.createElement('span');
+                time.textContent = currentTime();
+                messageMeta.appendChild(time);
+            } else {
+                const sent = document.createElement('span');
+                sent.textContent = 'Đã gửi';
+                messageMeta.appendChild(sent);
+            }
+            stack.append(bubble, messageMeta);
+            article.appendChild(stack);
+            messages.appendChild(article);
+            scrollToBottom();
+        }
+
+        function setLoading(loading) {
+            isLoading = loading;
+            sendButton.disabled = loading;
+            if (loading) {
+                const typing = document.createElement('div');
+                typing.className = 'typing';
+                typing.id = 'typingIndicator';
+                typing.innerHTML = '<span></span><span></span><span></span>';
+                messages.appendChild(typing);
+                scrollToBottom();
+            } else {
+                document.getElementById('typingIndicator')?.remove();
+            }
+        }
+
+        async function sendMessage() {
+            const text = input.value.trim();
+            if (!text || isLoading) return;
+            addMessage(text, true);
+            input.value = '';
+            resizeInput();
+            setLoading(true);
+            try {
+                if (IS_FILE_PREVIEW) {
+                    await new Promise((resolve) => setTimeout(resolve, 650));
+                    addMessage('Đây là bản xem trước giao diện 14 inch. Mở qua FastAPI thì câu hỏi sẽ được gửi tới RobotUTH thật. Bàn phím Telex đã bật sẵn: thử gõ "chaof" hoặc "tooi"!', false, { source: 'Preview mode' });
+                    return;
+                }
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 60000);
+                const response = await fetch(`${API_BASE_URL}/api/chat/query`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: text, include_references: true }),
+                    signal: controller.signal
+                });
+                clearTimeout(timeout);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) throw new Error(data.detail || `HTTP ${response.status}`);
+                addMessage(data.response || data.message || 'Server không trả về nội dung.', false, {
+                    source: data.sources?.length ? 'Tài liệu UTH' : 'LLM assistant'
+                });
+            } catch (error) {
+                const detail = error.name === 'AbortError' ? 'Server phản hồi quá lâu.' : `Không thể kết nối: ${error.message}`;
+                addMessage(detail, false, { source: 'Trạng thái kết nối' });
+                showToast(detail);
+            } finally {
+                setLoading(false);
+                input.focus();
+            }
+        }
+
+        function resizeInput() {
+            input.style.height = 'auto';
+            input.style.height = `${Math.min(input.scrollHeight, 110)}px`;
+        }
+
+        function insertChar(ch) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const value = input.value;
+            input.value = value.slice(0, start) + ch + value.slice(end);
+            const pos = start + ch.length;
+            input.setSelectionRange(pos, pos);
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function backspaceAtCursor() {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const value = input.value;
+            if (start !== end) {
+                input.value = value.slice(0, start) + value.slice(end);
+                input.setSelectionRange(start, start);
+            } else if (start > 0) {
+                input.value = value.slice(0, start - 1) + value.slice(start);
+                input.setSelectionRange(start - 1, start - 1);
+            }
+            input.dispatchEvent(new Event('input'));
+        }
+
+        function updateKeyLabels() {
+            document.querySelectorAll('#kbPanel .key[data-key]').forEach((key) => {
+                const v = key.dataset.key;
+                if (v.length === 1 && /[a-zđ]/i.test(v)) {
+                    key.textContent = kbState.shift ? v.toUpperCase() : v.toLowerCase();
+                }
+            });
+        }
+
+        function setLayer(layer) {
+            kbState.layer = layer;
+            document.getElementById('layerLetters').classList.toggle('hidden', layer !== 'letters');
+            document.getElementById('layerSymbols').classList.toggle('hidden', layer !== 'symbols');
+        }
+
+        kbPanel.addEventListener('click', (event) => {
+            const key = event.target.closest('.key');
+            if (!key) return;
+            const action = key.dataset.action;
+            if (action) {
+                if (action === 'shift') {
+                    kbState.shift = !kbState.shift;
+                    key.classList.toggle('key-active', kbState.shift);
+                    updateKeyLabels();
+                } else if (action === 'backspace') {
+                    backspaceAtCursor();
+                    input.focus({ preventScroll: true });
+                } else if (action === 'enter') {
+                    sendMessage();
+                } else if (action === 'layer') {
+                    setLayer(key.dataset.layer);
+                }
+                return;
+            }
+            let ch = key.dataset.key;
+            if (kbState.shift && ch.length === 1 && /[a-zđ]/i.test(ch)) {
+                ch = ch.toUpperCase();
+                kbState.shift = false;
+                document.getElementById('shiftKey')?.classList.remove('key-active');
+                updateKeyLabels();
+            }
+            insertChar(ch);
+            input.focus({ preventScroll: true });
+        });
+
+        input.addEventListener('input', () => {
+            resizeInput();
+            if (input.isComposing) return;
+            const caret = input.selectionStart;
+            const value = input.value;
+            let s = caret;
+            while (s > 0 && isWordChar(value[s - 1])) s--;
+            const word = value.slice(s, caret);
+            if (!word) return;
+            const afterChar = value[caret];
+            if (afterChar && isWordChar(afterChar)) return;
+            const transformed = telexTransform(word) || word;
+            const normalized = normalizeWord(transformed);
+            if (normalized !== word) {
+                input.value = value.slice(0, s) + normalized + value.slice(caret);
+                const pos = s + normalized.length;
+                input.setSelectionRange(pos, pos);
+            }
+        });
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+
+        document.getElementById('composer').addEventListener('submit', (event) => {
+            event.preventDefault();
+            sendMessage();
+        });
+
+        document.querySelectorAll('.chip[data-prompt]').forEach((chip) => {
+            chip.addEventListener('click', () => {
+                input.value = chip.dataset.prompt;
+                resizeInput();
+                input.focus();
+            });
+        });
+
+        newChatButton.addEventListener('click', () => {
+            messages.innerHTML = '<div class="day-divider">Cuộc trò chuyện mới</div>';
+            addMessage('Xin chào! Tôi đang sẵn sàng hỗ trợ bạn.', false);
+            input.focus();
+        });
+
+        helpButton.addEventListener('click', () => {
+            showToast('Bàn phím Telex luôn hiển thị: gõ aw→ă, aa→â, dd→đ; s/f/r/x/j thêm dấu sắc/huyền/hỏi/ngã/nặng.');
+        });
+
+        micButton.addEventListener('click', () => {
+            micButton.classList.toggle('recording');
+            const recording = micButton.classList.contains('recording');
+            showToast(recording ? 'Đang nghe... (dùng màn hình Conversation của robot cho giọng nói)' : 'Đã dừng micro');
+        });
+
+        async function checkConnection() {
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            if (IS_FILE_PREVIEW) {
+                statusText.textContent = 'Preview mode · mở trực tiếp từ file';
+                statusDot.classList.remove('dot');
+                return;
+            }
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`, { cache: 'no-store' });
+                if (!response.ok) throw new Error('offline');
+                statusText.textContent = 'Trực tuyến · phản hồi trực tiếp';
+            } catch (error) {
+                statusDot.classList.remove('dot');
+                statusText.textContent = 'Chưa kết nối server';
+            }
+        }
+
+        setLayer('letters');
+        updateKeyLabels();
+        checkConnection();
+        input.focus();
+    </script>
+</body>
+</html>

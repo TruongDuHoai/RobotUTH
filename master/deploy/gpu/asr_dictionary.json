@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "description": "UTH domain phrase fixes for Parakeet ASR. Longest match wins. Edit without rebuild.",
+  "replacements": [
+    {"from": "đại học giao thông vận tải", "to": "Đại học Giao thông Vận tải"},
+    {"from": "đại học giao thông", "to": "Đại học Giao thông Vận tải"},
+    {"from": "truong dai hoc giao thong", "to": "Đại học Giao thông Vận tải"},
+    {"from": "giao thông vận tải thành phố hồ chí minh", "to": "Giao thông Vận tải TP.HCM"},
+    {"from": "uth", "to": "UTH"},
+    {"from": "u t h", "to": "UTH"},
+    {"from": "co so 1", "to": "cơ sở 1"},
+    {"from": "co so 2", "to": "cơ sở 2"},
+    {"from": "co so 3", "to": "cơ sở 3"},
+    {"from": "cơ sở một", "to": "cơ sở 1"},
+    {"from": "cơ sở hai", "to": "cơ sở 2"},
+    {"from": "cơ sở ba", "to": "cơ sở 3"},
+    {"from": "khoa công nghệ thông tin", "to": "Khoa Công nghệ thông tin"},
+    {"from": "khoa cntt", "to": "Khoa CNTT"},
+    {"from": "khoa điện điện tử", "to": "Khoa Điện – Điện tử"},
+    {"from": "khoa cơ khí", "to": "Khoa Cơ khí"},
+    {"from": "khoa xây dựng", "to": "Khoa Xây dựng"},
+    {"from": "khoa kinh tế", "to": "Khoa Kinh tế"},
+    {"from": "khoa ngoại ngữ", "to": "Khoa Ngoại ngữ"},
+    {"from": "phòng đào tạo", "to": "Phòng Đào tạo"},
+    {"from": "phòng công tác sinh viên", "to": "Phòng Công tác sinh viên"},
+    {"from": "công tác sinh viên", "to": "Công tác sinh viên"},
+    {"from": "ban giám hiệu", "to": "Ban Giám hiệu"},
+    {"from": "thoi khoa bieu", "to": "thời khóa biểu"},
+    {"from": "robot uth", "to": "robot UTH"},
+    {"from": "robotuth", "to": "RobotUTH"}
+  ]
+}

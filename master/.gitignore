@@ -1,0 +1,84 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.env.local
+
+# Virtualenv — mọi biến thể (.venv, .venv-asr/.venv-ocr, .venv-old, venv2, ...)
+.venv*/
+venv*/
+ENV/
+env/
+
+# Build artifacts (pip install -e . / python -m build)
+*.egg-info/
+build/
+dist/
+.eggs/
+
+# Models & caches (download on server)
+# Neo "/models/" de KHONG chan deploy/models/ (bai hoc bookchat).
+/models/
+*.nemo
+*.onnx
+*.bin
+
+# Android build
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.apk
+*.aab
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+/logs/
+terminals/
+.kimchi/
+mcps/
+tmp_adb/
+
+# Local tooling & scratch (screenshots, UI dumps, build caches)
+.zcode/
+.workbuddy-ai/
+/data/
+/outputs/
+/build-cache/
+/tmp_jcore/
+/tmp/
+/tests/asr_samples/_selftest_log/
+/*.png
+/*.wav
+/defender_*.txt
+/logcat_*.txt
+/phone_ui.xml
+/ui*.xml
+/android_ui.md
+
+# Secrets
+*.pem
+*.key
+*.bak
+data/runtime_settings.json
+data/asr_eval/
+tmp_apk/
+
+# Tai lieu trao doi noi bo (nhu bookchat: default-deny ca thu muc)
+/noibo/
+
+# Cong cu thi nghiem (eval/bench/probe, test operator, proxy dev) da doi sang
+# noibo/thi-nghiem/ — `/noibo/` o tren da ignore ca thu muc nen khong liet ke lai.
+# Xem README "Cong cu thi nghiem".
+
+# Rac debug
+/map_logcat.txt
